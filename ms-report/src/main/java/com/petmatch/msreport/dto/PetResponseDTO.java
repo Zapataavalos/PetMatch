@@ -1,4 +1,12 @@
 package com.petmatch.msreport.dto;
+
 import lombok.*;
-@Data @NoArgsConstructor @AllArgsConstructor
-public class PetResponseDTO { private Long idPet; private String name; }
+
+/** Modela la respuesta de ms-pet para validar FK (MER). */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PetResponseDTO {
+    private Long idPet;
+    private String name;
+}

@@ -2,6 +2,7 @@ package com.petmatch.msreport.factory;
 
 import com.petmatch.msreport.dto.ReportDTO;
 import com.petmatch.msreport.model.Report;
+
 import java.time.LocalDateTime;
 
 /**
@@ -9,11 +10,14 @@ import java.time.LocalDateTime;
  *
  * Crea objetos Report según el tipo indicado en el DTO,
  * asignando automáticamente el estado correspondiente:
- *   1 (PERDIDA)     → idStatus = 1 (ACTIVO)
- *   2 (ENCONTRADA)  → idStatus = 2 (RESUELTO)
- *   3 (EN_PELIGRO)  → idStatus = 3 (URGENTE)
  *
- * El cliente solo envía idType; el estado lo define el Factory.
+ *   Tipo 1 → PERDIDA    → Estado 1 (ACTIVO)
+ *   Tipo 2 → ENCONTRADA → Estado 2 (RESUELTO)
+ *   Tipo 3 → EN_PELIGRO → Estado 3 (URGENTE)
+ *
+ * El cliente solo envía idType; el Factory decide el estado.
+ * Esto implementa el principio Open/Closed: para agregar un nuevo
+ * tipo de reporte solo se añade un case aquí sin tocar el resto.
  */
 public abstract class ReportFactory {
 
@@ -24,7 +28,7 @@ public abstract class ReportFactory {
             case 3 -> crearReportePeligro(dto);
             default -> throw new IllegalArgumentException(
                     "Tipo de reporte inválido: " + dto.getIdType() +
-                    ". Use 1=PERDIDA, 2=ENCONTRADA, 3=EN_PELIGRO");
+                    ". Valores válidos: 1=PERDIDA, 2=ENCONTRADA, 3=EN_PELIGRO");
         };
     }
 

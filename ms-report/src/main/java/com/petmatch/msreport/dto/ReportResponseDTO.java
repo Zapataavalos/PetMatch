@@ -1,7 +1,13 @@
 package com.petmatch.msreport.dto;
+
 import lombok.*;
 import java.time.LocalDateTime;
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+
+/** DTO de salida — incluye nombres de tipo y estado enriquecidos desde otros microservicios. */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ReportResponseDTO {
     private Long idReport;
     private LocalDateTime date;

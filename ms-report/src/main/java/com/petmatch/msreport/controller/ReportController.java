@@ -2,6 +2,7 @@ package com.petmatch.msreport.controller;
 
 import com.petmatch.msreport.dto.ReportDTO;
 import com.petmatch.msreport.dto.ReportResponseDTO;
+import com.petmatch.msreport.dto.ReportUpdateStatusDTO;
 import com.petmatch.msreport.service.ReportService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService reportService;
+
+    // ── GET ────────────────────────────────────────────────────────────────
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','CIUDADANO','DUENO')")
@@ -55,20 +58,30 @@ public class ReportController {
         return ResponseEntity.ok(reportService.getByStatus(idStatus));
     }
 
-    // Factory Method crea el reporte automáticamente según idType
+    // ── POST ───────────────────────────────────────────────────────────────
+
+    /**
+     * El cliente envía idType (1, 2 o 3).
+     * El Factory Method asigna el estado automáticamente.
+     */
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','CIUDADANO','DUENO')")
     public ResponseEntity<ReportResponseDTO> create(@Valid @RequestBody ReportDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reportService.save(dto));
     }
 
-    // Actualizar solo el estado del reporte
-    @PatchMapping("/{id}/status/{idStatus}")
+    // ── PATCH ──────────────────────────────────────────────────────────────
+
+    /** Actualiza únicamente el estado de un reporte existente. */
+    @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN','DUENO')")
-    public ResponseEntity<ReportResponseDTO> updateStatus(@PathVariable Long id,
-                                                           @PathVariable Long idStatus) {
-        return ResponseEntity.ok(reportService.updateStatus(id, idStatus));
+    public ResponseEntity<ReportResponseDTO> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody ReportUpdateStatusDTO dto) {
+        return ResponseEntity.ok(reportService.updateStatus(id, dto.getIdStatus()));
     }
+
+    // ── DELETE ─────────────────────────────────────────────────────────────
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
