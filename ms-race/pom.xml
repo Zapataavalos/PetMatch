@@ -8,16 +8,18 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.6</version>
+        <!-- 3.4.5: compatible con Spring Cloud 2024.0.1 + Feign -->
+        <version>3.4.5</version>
     </parent>
 
     <groupId>com.petmatch</groupId>
     <artifactId>ms-race</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <n>ms-race</n>
+    <name>ms-race</name>
 
     <properties>
         <java.version>21</java.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -54,7 +56,6 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- Feign Client para comunicarse con ms-animal-type -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
@@ -81,7 +82,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
-                <version>2024.0.1</version>
+                <version>${spring-cloud.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
