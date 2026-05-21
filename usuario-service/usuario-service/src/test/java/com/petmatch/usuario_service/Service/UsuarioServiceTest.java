@@ -2,6 +2,7 @@ package com.petmatch.usuario_service.Service;
 
 import com.petmatch.usuario_service.DTO.UsuarioRequestDTO;
 import com.petmatch.usuario_service.DTO.UsuarioResponseDTO;
+import com.petmatch.usuario_service.Event.UsuarioEventPublisher;
 import com.petmatch.usuario_service.Exception.BadRequestException;
 import com.petmatch.usuario_service.Exception.ResourceNotFoundException;
 import com.petmatch.usuario_service.Model.Usuario;
@@ -35,30 +36,58 @@ class UsuarioServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private UsuarioEventPublisher usuarioEventPublisher;
+
     @InjectMocks
     private UsuarioService usuarioService;
 
     @Test
     @DisplayName("Debe listar todos los usuarios correctamente")
     void listarUsuarios_debeRetornarListaDeUsuarios() {
-        Usuario usuario1 = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), 1);
-        Usuario usuario2 = new Usuario(2, "JUAN PEREZ", "juan@test.cl", "HASH", LocalDateTime.now(), 1);
+        Usuario usuario1 = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
+
+        Usuario usuario2 = new Usuario(
+                2,
+                "JUAN PEREZ",
+                "juan@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
 
         when(usuarioRepository.findAll()).thenReturn(List.of(usuario1, usuario2));
 
         List<UsuarioResponseDTO> resultado = usuarioService.listarUsuarios();
 
         assertThat(resultado).hasSize(2);
+        assertThat(resultado.get(0).idUsuario()).isEqualTo(1);
         assertThat(resultado.get(0).nombre()).isEqualTo("BENJAMIN MENDEZ");
         assertThat(resultado.get(0).email()).isEqualTo("benjamin@test.cl");
+        assertThat(resultado.get(0).idRol()).isEqualTo(1);
 
         verify(usuarioRepository, times(1)).findAll();
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
     @DisplayName("Debe buscar usuario por ID correctamente")
     void buscarUsuarioPorId_cuandoExiste_debeRetornarUsuario() {
-        Usuario usuario = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), 1);
+        Usuario usuario = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
 
@@ -70,6 +99,7 @@ class UsuarioServiceTest {
         assertThat(resultado.idRol()).isEqualTo(1);
 
         verify(usuarioRepository, times(1)).findById(1);
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
@@ -82,6 +112,7 @@ class UsuarioServiceTest {
                 .hasMessageContaining("No se encontró el usuario con ID: 99");
 
         verify(usuarioRepository, times(1)).findById(99);
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
@@ -89,7 +120,14 @@ class UsuarioServiceTest {
     void listarUsuariosPorRol_cuandoRolExiste_debeRetornarUsuarios() {
         Integer idRol = 1;
 
-        Usuario usuario = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), idRol);
+        Usuario usuario = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                idRol
+        );
 
         when(rolReferenciaRepository.existsByIdRolAndActivoTrue(idRol)).thenReturn(true);
         when(usuarioRepository.findByIdRol(idRol)).thenReturn(List.of(usuario));
@@ -101,6 +139,7 @@ class UsuarioServiceTest {
 
         verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(idRol);
         verify(usuarioRepository, times(1)).findByIdRol(idRol);
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
@@ -114,12 +153,14 @@ class UsuarioServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("No existe un rol activo registrado con ID: 99");
 
+        verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(idRol);
         verify(usuarioRepository, never()).findByIdRol(any());
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
-    @DisplayName("Debe crear un usuario correctamente")
-    void crearUsuario_cuandoDatosValidos_debeCrearUsuario() {
+    @DisplayName("Debe crear un usuario correctamente y publicar evento")
+    void crearUsuario_cuandoDatosValidos_debeCrearUsuarioYPublicarEvento() {
         UsuarioRequestDTO requestDTO = new UsuarioRequestDTO(
                 "Benjamin Mendez",
                 "BENJAMIN@TEST.CL",
@@ -148,6 +189,7 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).existsByEmailIgnoreCase("benjamin@test.cl");
         verify(passwordEncoder, times(1)).encode("12345678");
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
+        verify(usuarioEventPublisher, times(1)).publicarUsuarioCreado(any(Usuario.class));
     }
 
     @Test
@@ -166,7 +208,9 @@ class UsuarioServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("No existe un rol activo registrado con ID: 99");
 
+        verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(99);
         verify(usuarioRepository, never()).save(any(Usuario.class));
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
@@ -186,13 +230,23 @@ class UsuarioServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Ya existe un usuario registrado con el email: benjamin@test.cl");
 
+        verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(1);
+        verify(usuarioRepository, times(1)).existsByEmailIgnoreCase("benjamin@test.cl");
         verify(usuarioRepository, never()).save(any(Usuario.class));
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
-    @DisplayName("Debe actualizar un usuario correctamente")
-    void actualizarUsuario_cuandoDatosValidos_debeActualizarUsuario() {
-        Usuario usuarioExistente = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), 1);
+    @DisplayName("Debe actualizar un usuario correctamente y publicar evento")
+    void actualizarUsuario_cuandoDatosValidos_debeActualizarUsuarioYPublicarEvento() {
+        Usuario usuarioExistente = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
 
         UsuarioRequestDTO requestDTO = new UsuarioRequestDTO(
                 "Benjamin Actualizado",
@@ -212,15 +266,27 @@ class UsuarioServiceTest {
         assertThat(resultado.idUsuario()).isEqualTo(1);
         assertThat(resultado.nombre()).isEqualTo("BENJAMIN ACTUALIZADO");
         assertThat(resultado.email()).isEqualTo("nuevo@test.cl");
+        assertThat(resultado.idRol()).isEqualTo(1);
 
         verify(usuarioRepository, times(1)).findById(1);
+        verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(1);
+        verify(usuarioRepository, times(1)).existsByEmailIgnoreCaseAndIdUsuarioNot("nuevo@test.cl", 1);
+        verify(passwordEncoder, times(1)).encode("12345678");
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
+        verify(usuarioEventPublisher, times(1)).publicarUsuarioActualizado(any(Usuario.class));
     }
 
     @Test
     @DisplayName("No debe actualizar usuario si el email pertenece a otro usuario")
     void actualizarUsuario_cuandoEmailDuplicado_debeLanzarBadRequest() {
-        Usuario usuarioExistente = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), 1);
+        Usuario usuarioExistente = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
 
         UsuarioRequestDTO requestDTO = new UsuarioRequestDTO(
                 "Benjamin Mendez",
@@ -237,13 +303,24 @@ class UsuarioServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Ya existe otro usuario registrado con el email: otro@test.cl");
 
+        verify(usuarioRepository, times(1)).findById(1);
+        verify(rolReferenciaRepository, times(1)).existsByIdRolAndActivoTrue(1);
+        verify(usuarioRepository, times(1)).existsByEmailIgnoreCaseAndIdUsuarioNot("otro@test.cl", 1);
         verify(usuarioRepository, never()).save(any(Usuario.class));
+        verifyNoInteractions(usuarioEventPublisher);
     }
 
     @Test
-    @DisplayName("Debe eliminar un usuario correctamente")
-    void eliminarUsuario_cuandoExiste_debeEliminarUsuario() {
-        Usuario usuario = new Usuario(1, "BENJAMIN MENDEZ", "benjamin@test.cl", "HASH", LocalDateTime.now(), 1);
+    @DisplayName("Debe eliminar un usuario correctamente y publicar evento")
+    void eliminarUsuario_cuandoExiste_debeEliminarUsuarioYPublicarEvento() {
+        Usuario usuario = new Usuario(
+                1,
+                "BENJAMIN MENDEZ",
+                "benjamin@test.cl",
+                "HASH",
+                LocalDateTime.now(),
+                1
+        );
 
         when(usuarioRepository.findById(1)).thenReturn(Optional.of(usuario));
 
@@ -251,5 +328,20 @@ class UsuarioServiceTest {
 
         verify(usuarioRepository, times(1)).findById(1);
         verify(usuarioRepository, times(1)).delete(usuario);
+        verify(usuarioEventPublisher, times(1)).publicarUsuarioEliminado(usuario);
+    }
+
+    @Test
+    @DisplayName("No debe eliminar usuario inexistente")
+    void eliminarUsuario_cuandoNoExiste_debeLanzarResourceNotFound() {
+        when(usuarioRepository.findById(99)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> usuarioService.eliminarUsuario(99))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("No se encontró el usuario con ID: 99");
+
+        verify(usuarioRepository, times(1)).findById(99);
+        verify(usuarioRepository, never()).delete(any(Usuario.class));
+        verifyNoInteractions(usuarioEventPublisher);
     }
 }

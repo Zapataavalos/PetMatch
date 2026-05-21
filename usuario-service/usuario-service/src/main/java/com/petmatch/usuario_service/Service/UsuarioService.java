@@ -2,6 +2,7 @@ package com.petmatch.usuario_service.Service;
 
 import com.petmatch.usuario_service.DTO.UsuarioRequestDTO;
 import com.petmatch.usuario_service.DTO.UsuarioResponseDTO;
+import com.petmatch.usuario_service.Event.UsuarioEventPublisher;
 import com.petmatch.usuario_service.Exception.BadRequestException;
 import com.petmatch.usuario_service.Exception.ResourceNotFoundException;
 import com.petmatch.usuario_service.Model.Usuario;
@@ -19,15 +20,18 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final RolReferenciaRepository rolReferenciaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UsuarioEventPublisher usuarioEventPublisher;
 
     public UsuarioService(
             UsuarioRepository usuarioRepository,
             RolReferenciaRepository rolReferenciaRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            UsuarioEventPublisher usuarioEventPublisher
     ) {
         this.usuarioRepository = usuarioRepository;
         this.rolReferenciaRepository = rolReferenciaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.usuarioEventPublisher = usuarioEventPublisher;
     }
 
     public List<UsuarioResponseDTO> listarUsuarios() {
@@ -70,6 +74,8 @@ public class UsuarioService {
 
         Usuario usuarioGuardado = usuarioRepository.save(usuario);
 
+        usuarioEventPublisher.publicarUsuarioCreado(usuarioGuardado);
+
         return convertirAResponseDTO(usuarioGuardado);
     }
 
@@ -92,12 +98,17 @@ public class UsuarioService {
 
         Usuario usuarioActualizado = usuarioRepository.save(usuario);
 
+        usuarioEventPublisher.publicarUsuarioActualizado(usuarioActualizado);
+
         return convertirAResponseDTO(usuarioActualizado);
     }
 
     public void eliminarUsuario(Integer idUsuario) {
         Usuario usuario = obtenerUsuarioPorId(idUsuario);
+
         usuarioRepository.delete(usuario);
+
+        usuarioEventPublisher.publicarUsuarioEliminado(usuario);
     }
 
     private Usuario obtenerUsuarioPorId(Integer idUsuario) {

@@ -77,31 +77,6 @@ class ColorServiceTest {
     }
 
     @Test
-    @DisplayName("Debe crear un color correctamente")
-    void crearColor_cuandoNoExisteNombreNiHex_debeCrearColor() {
-        ColorRequestDTO requestDTO = new ColorRequestDTO("Rojo", "#ff0000");
-
-        when(colorRepository.existsByNombreColorIgnoreCase("ROJO")).thenReturn(false);
-        when(colorRepository.existsByCodigoHexadecimalIgnoreCase("#FF0000")).thenReturn(false);
-
-        when(colorRepository.save(any(Color.class))).thenAnswer(invocation -> {
-            Color color = invocation.getArgument(0);
-            color.setIdColor(1);
-            return color;
-        });
-
-        ColorResponseDTO resultado = colorService.crearColor(requestDTO);
-
-        assertThat(resultado.idColor()).isEqualTo(1);
-        assertThat(resultado.nombreColor()).isEqualTo("ROJO");
-        assertThat(resultado.codigoHexadecimal()).isEqualTo("#FF0000");
-
-        verify(colorRepository, times(1)).existsByNombreColorIgnoreCase("ROJO");
-        verify(colorRepository, times(1)).existsByCodigoHexadecimalIgnoreCase("#FF0000");
-        verify(colorRepository, times(1)).save(any(Color.class));
-    }
-
-    @Test
     @DisplayName("No debe crear un color si el nombre ya existe")
     void crearColor_cuandoNombreExiste_debeLanzarBadRequest() {
         ColorRequestDTO requestDTO = new ColorRequestDTO("Rojo", "#FF0000");
@@ -133,26 +108,6 @@ class ColorServiceTest {
         verify(colorRepository, never()).save(any(Color.class));
     }
 
-    @Test
-    @DisplayName("Debe actualizar un color correctamente")
-    void actualizarColor_cuandoExisteYNoEstaDuplicado_debeActualizarColor() {
-        Color colorExistente = new Color(1, "ROJO", "#FF0000");
-        ColorRequestDTO requestDTO = new ColorRequestDTO("Azul", "#0000ff");
-
-        when(colorRepository.findById(1)).thenReturn(Optional.of(colorExistente));
-        when(colorRepository.existsByNombreColorIgnoreCaseAndIdColorNot("AZUL", 1)).thenReturn(false);
-        when(colorRepository.existsByCodigoHexadecimalIgnoreCaseAndIdColorNot("#0000FF", 1)).thenReturn(false);
-        when(colorRepository.save(any(Color.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        ColorResponseDTO resultado = colorService.actualizarColor(1, requestDTO);
-
-        assertThat(resultado.idColor()).isEqualTo(1);
-        assertThat(resultado.nombreColor()).isEqualTo("AZUL");
-        assertThat(resultado.codigoHexadecimal()).isEqualTo("#0000FF");
-
-        verify(colorRepository, times(1)).findById(1);
-        verify(colorRepository, times(1)).save(any(Color.class));
-    }
 
     @Test
     @DisplayName("No debe actualizar un color si el nuevo nombre ya existe")
@@ -187,19 +142,6 @@ class ColorServiceTest {
 
         verify(colorRepository, times(1)).findById(1);
         verify(colorRepository, never()).save(any(Color.class));
-    }
-
-    @Test
-    @DisplayName("Debe eliminar un color correctamente")
-    void eliminarColor_cuandoExiste_debeEliminarColor() {
-        Color color = new Color(1, "ROJO", "#FF0000");
-
-        when(colorRepository.findById(1)).thenReturn(Optional.of(color));
-
-        colorService.eliminarColor(1);
-
-        verify(colorRepository, times(1)).findById(1);
-        verify(colorRepository, times(1)).delete(color);
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.petmatch.color_service.Service;
 
 import com.petmatch.color_service.DTO.ColorRequestDTO;
 import com.petmatch.color_service.DTO.ColorResponseDTO;
+import com.petmatch.color_service.Event.ColorEventPublisher;
 import com.petmatch.color_service.Exception.BadRequestException;
 import com.petmatch.color_service.Exception.ResourceNotFoundException;
 import com.petmatch.color_service.Model.Color;
@@ -14,9 +15,11 @@ import java.util.List;
 public class ColorService {
 
     private final ColorRepository colorRepository;
+    private final ColorEventPublisher colorEventPublisher;
 
-    public ColorService(ColorRepository colorRepository) {
+    public ColorService(ColorRepository colorRepository, ColorEventPublisher colorEventPublisher) {
         this.colorRepository = colorRepository;
+        this.colorEventPublisher = colorEventPublisher;
     }
 
     public List<ColorResponseDTO> listarColores() {
@@ -49,6 +52,8 @@ public class ColorService {
 
         Color colorGuardado = colorRepository.save(color);
 
+        colorEventPublisher.publicarColorCreado(colorGuardado);
+
         return convertirAResponseDTO(colorGuardado);
     }
 
@@ -71,12 +76,17 @@ public class ColorService {
 
         Color colorActualizado = colorRepository.save(color);
 
+        colorEventPublisher.publicarColorActualizado(colorActualizado);
+
         return convertirAResponseDTO(colorActualizado);
     }
 
     public void eliminarColor(Integer idColor) {
         Color color = obtenerColorPorId(idColor);
+
         colorRepository.delete(color);
+
+        colorEventPublisher.publicarColorEliminado(color);
     }
 
     private Color obtenerColorPorId(Integer idColor) {
