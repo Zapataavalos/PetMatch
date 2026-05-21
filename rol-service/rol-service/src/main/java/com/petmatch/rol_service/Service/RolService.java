@@ -1,13 +1,13 @@
 package com.petmatch.rol_service.Service;
 
-import org.springframework.stereotype.Service;
-
 import com.petmatch.rol_service.DTO.RolRequestDTO;
 import com.petmatch.rol_service.DTO.RolResponseDTO;
+import com.petmatch.rol_service.Event.RolEventPublisher;
 import com.petmatch.rol_service.Exception.BadRequestException;
 import com.petmatch.rol_service.Exception.ResourceNotFoundException;
 import com.petmatch.rol_service.Model.Rol;
 import com.petmatch.rol_service.Repository.RolRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -15,9 +15,11 @@ import java.util.List;
 public class RolService {
 
     private final RolRepository rolRepository;
+    private final RolEventPublisher rolEventPublisher;
 
-    public RolService(RolRepository rolRepository) {
+    public RolService(RolRepository rolRepository, RolEventPublisher rolEventPublisher) {
         this.rolRepository = rolRepository;
+        this.rolEventPublisher = rolEventPublisher;
     }
 
     public List<RolResponseDTO> listarRoles() {
@@ -44,6 +46,8 @@ public class RolService {
 
         Rol rolGuardado = rolRepository.save(rol);
 
+        rolEventPublisher.publicarRolCreado(rolGuardado);
+
         return convertirAResponseDTO(rolGuardado);
     }
 
@@ -60,12 +64,17 @@ public class RolService {
 
         Rol rolActualizado = rolRepository.save(rol);
 
+        rolEventPublisher.publicarRolActualizado(rolActualizado);
+
         return convertirAResponseDTO(rolActualizado);
     }
 
     public void eliminarRol(Integer idRol) {
         Rol rol = obtenerRolPorId(idRol);
+
         rolRepository.delete(rol);
+
+        rolEventPublisher.publicarRolEliminado(rol);
     }
 
     private Rol obtenerRolPorId(Integer idRol) {
