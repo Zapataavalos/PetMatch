@@ -2,6 +2,7 @@ package com.petmatch.region_service.Service;
 
 import com.petmatch.region_service.DTO.RegionRequestDto;
 import com.petmatch.region_service.DTO.RegionResponseDto;
+import com.petmatch.region_service.Event.RegionEventPublisher;
 import com.petmatch.region_service.Exception.BadRequestException;
 import com.petmatch.region_service.Exception.ResourceNotFoundException;
 import com.petmatch.region_service.Model.Region;
@@ -16,13 +17,16 @@ public class RegionService {
 
     private final RegionRepository regionRepository;
     private final PaisReferenciaRepository paisReferenciaRepository;
+    private final RegionEventPublisher regionEventPublisher;
 
     public RegionService(
             RegionRepository regionRepository,
-            PaisReferenciaRepository paisReferenciaRepository
+            PaisReferenciaRepository paisReferenciaRepository,
+            RegionEventPublisher regionEventPublisher
     ) {
         this.regionRepository = regionRepository;
         this.paisReferenciaRepository = paisReferenciaRepository;
+        this.regionEventPublisher = regionEventPublisher;
     }
 
     public List<RegionResponseDto> listarRegiones() {
@@ -69,6 +73,8 @@ public class RegionService {
 
         Region regionGuardada = regionRepository.save(region);
 
+        regionEventPublisher.publicarRegionCreada(regionGuardada);
+
         return convertirAResponseDTO(regionGuardada);
     }
 
@@ -97,12 +103,17 @@ public class RegionService {
 
         Region regionActualizada = regionRepository.save(region);
 
+        regionEventPublisher.publicarRegionActualizada(regionActualizada);
+
         return convertirAResponseDTO(regionActualizada);
     }
 
     public void eliminarRegion(Integer idRegion) {
         Region region = obtenerRegionPorId(idRegion);
+
         regionRepository.delete(region);
+
+        regionEventPublisher.publicarRegionEliminada(region);
     }
 
     private Region obtenerRegionPorId(Integer idRegion) {
