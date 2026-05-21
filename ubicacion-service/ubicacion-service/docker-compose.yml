@@ -1,0 +1,20 @@
+services:
+  ubicacion-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ubicacion-service
+    ports:
+      - "8096:8096"
+    environment:
+      SERVER_PORT: 8096
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/ubicacion_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ""
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_RABBITMQ_HOST: host.docker.internal
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    restart: unless-stopped
