@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    // Eventos recibidos desde region-service
     public static final String REGION_EXCHANGE = "region.exchange";
 
     public static final String REGION_CREADA_QUEUE = "ciudad.region.creada.queue";
@@ -20,9 +21,21 @@ public class RabbitMQConfig {
     public static final String REGION_ACTUALIZADA_ROUTING_KEY = "region.actualizada";
     public static final String REGION_ELIMINADA_ROUTING_KEY = "region.eliminada";
 
+    // Eventos publicados hacia ubicacion-service
+    public static final String CIUDAD_EXCHANGE = "ciudad.exchange";
+
+    public static final String CIUDAD_CREADA_ROUTING_KEY = "ciudad.creada";
+    public static final String CIUDAD_ACTUALIZADA_ROUTING_KEY = "ciudad.actualizada";
+    public static final String CIUDAD_ELIMINADA_ROUTING_KEY = "ciudad.eliminada";
+
     @Bean
     public DirectExchange regionExchange() {
         return new DirectExchange(REGION_EXCHANGE);
+    }
+
+    @Bean
+    public DirectExchange ciudadExchange() {
+        return new DirectExchange(CIUDAD_EXCHANGE);
     }
 
     @Bean

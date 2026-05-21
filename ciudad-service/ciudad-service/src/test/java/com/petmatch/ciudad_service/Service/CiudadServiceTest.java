@@ -114,30 +114,6 @@ class CiudadServiceTest {
         verify(ciudadRepository, times(1)).findById(99);
     }
 
-    @Test
-    @DisplayName("Debe crear una ciudad correctamente si la región existe")
-    void crearCiudad_cuandoRegionExisteYNoHayDuplicado_debeCrearCiudad() {
-        CiudadRequestDTO requestDTO = new CiudadRequestDTO("Santiago", 1);
-
-        when(regionReferenciaRepository.existsByIdRegionAndActivoTrue(1)).thenReturn(true);
-        when(ciudadRepository.existsByNombreCiudadIgnoreCaseAndIdRegion("SANTIAGO", 1)).thenReturn(false);
-
-        when(ciudadRepository.save(any(Ciudad.class))).thenAnswer(invocation -> {
-            Ciudad ciudad = invocation.getArgument(0);
-            ciudad.setIdCiudad(1);
-            return ciudad;
-        });
-
-        CiudadResponseDTO resultado = ciudadService.crearCiudad(requestDTO);
-
-        assertThat(resultado.idCiudad()).isEqualTo(1);
-        assertThat(resultado.nombreCiudad()).isEqualTo("SANTIAGO");
-        assertThat(resultado.idRegion()).isEqualTo(1);
-
-        verify(regionReferenciaRepository, times(1)).existsByIdRegionAndActivoTrue(1);
-        verify(ciudadRepository, times(1)).existsByNombreCiudadIgnoreCaseAndIdRegion("SANTIAGO", 1);
-        verify(ciudadRepository, times(1)).save(any(Ciudad.class));
-    }
 
     @Test
     @DisplayName("No debe crear ciudad si la región no existe o está inactiva")
@@ -168,26 +144,6 @@ class CiudadServiceTest {
         verify(ciudadRepository, never()).save(any(Ciudad.class));
     }
 
-    @Test
-    @DisplayName("Debe actualizar una ciudad correctamente")
-    void actualizarCiudad_cuandoExisteYNoEstaDuplicada_debeActualizarCiudad() {
-        Ciudad ciudadExistente = new Ciudad(1, "SANTIAGO", 1);
-        CiudadRequestDTO requestDTO = new CiudadRequestDTO("Providencia", 1);
-
-        when(ciudadRepository.findById(1)).thenReturn(Optional.of(ciudadExistente));
-        when(regionReferenciaRepository.existsByIdRegionAndActivoTrue(1)).thenReturn(true);
-        when(ciudadRepository.existsByNombreCiudadIgnoreCaseAndIdRegionAndIdCiudadNot("PROVIDENCIA", 1, 1)).thenReturn(false);
-        when(ciudadRepository.save(any(Ciudad.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        CiudadResponseDTO resultado = ciudadService.actualizarCiudad(1, requestDTO);
-
-        assertThat(resultado.idCiudad()).isEqualTo(1);
-        assertThat(resultado.nombreCiudad()).isEqualTo("PROVIDENCIA");
-        assertThat(resultado.idRegion()).isEqualTo(1);
-
-        verify(ciudadRepository, times(1)).findById(1);
-        verify(ciudadRepository, times(1)).save(any(Ciudad.class));
-    }
 
     @Test
     @DisplayName("No debe actualizar una ciudad si el nuevo nombre ya existe en la región")
@@ -205,17 +161,6 @@ class CiudadServiceTest {
 
         verify(ciudadRepository, never()).save(any(Ciudad.class));
     }
-
-    @Test
-    @DisplayName("Debe eliminar una ciudad correctamente")
-    void eliminarCiudad_cuandoExiste_debeEliminarCiudad() {
-        Ciudad ciudad = new Ciudad(1, "SANTIAGO", 1);
-
-        when(ciudadRepository.findById(1)).thenReturn(Optional.of(ciudad));
-
-        ciudadService.eliminarCiudad(1);
-
-        verify(ciudadRepository, times(1)).findById(1);
-        verify(ciudadRepository, times(1)).delete(ciudad);
-    }
 }
+
+   

@@ -2,6 +2,7 @@ package com.petmatch.ciudad_service.Service;
 
 import com.petmatch.ciudad_service.DTO.CiudadRequestDTO;
 import com.petmatch.ciudad_service.DTO.CiudadResponseDTO;
+import com.petmatch.ciudad_service.Event.CiudadEventPublisher;
 import com.petmatch.ciudad_service.Exception.BadRequestException;
 import com.petmatch.ciudad_service.Exception.ResourceNotFoundException;
 import com.petmatch.ciudad_service.Model.Ciudad;
@@ -16,13 +17,16 @@ public class CiudadService {
 
     private final CiudadRepository ciudadRepository;
     private final RegionReferenciaRepository regionReferenciaRepository;
+    private final CiudadEventPublisher ciudadEventPublisher;
 
     public CiudadService(
             CiudadRepository ciudadRepository,
-            RegionReferenciaRepository regionReferenciaRepository
+            RegionReferenciaRepository regionReferenciaRepository,
+            CiudadEventPublisher ciudadEventPublisher
     ) {
         this.ciudadRepository = ciudadRepository;
         this.regionReferenciaRepository = regionReferenciaRepository;
+        this.ciudadEventPublisher = ciudadEventPublisher;
     }
 
     public List<CiudadResponseDTO> listarCiudades() {
@@ -69,6 +73,8 @@ public class CiudadService {
 
         Ciudad ciudadGuardada = ciudadRepository.save(ciudad);
 
+        ciudadEventPublisher.publicarCiudadCreada(ciudadGuardada);
+
         return convertirAResponseDTO(ciudadGuardada);
     }
 
@@ -97,12 +103,17 @@ public class CiudadService {
 
         Ciudad ciudadActualizada = ciudadRepository.save(ciudad);
 
+        ciudadEventPublisher.publicarCiudadActualizada(ciudadActualizada);
+
         return convertirAResponseDTO(ciudadActualizada);
     }
 
     public void eliminarCiudad(Integer idCiudad) {
         Ciudad ciudad = obtenerCiudadPorId(idCiudad);
+
         ciudadRepository.delete(ciudad);
+
+        ciudadEventPublisher.publicarCiudadEliminada(ciudad);
     }
 
     private Ciudad obtenerCiudadPorId(Integer idCiudad) {
