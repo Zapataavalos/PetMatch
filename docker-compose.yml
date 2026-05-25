@@ -16,9 +16,12 @@ version: '3.9'
 # ═══════════════════════════════════════════════════════════════════════════
 
 services:
+  # ============================================================
+  # INFRAESTRUCTURA
+  # ============================================================
 
   rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+    image: rabbitmq:3.13-management-alpine 
     container_name: rabbitmq
     restart: unless-stopped
     ports:
@@ -45,13 +48,14 @@ services:
     restart: unless-stopped
     ports:
       - "8761:8761"
+    environment:
+      SERVER_PORT: 8761
     networks:
       - petmatch-net
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
+
+  # ============================================================
+  # BASES DE DATOS - SERVICIOS DEL COMPAÑERO
+  # ============================================================
 
   mysql-animal-type:
     image: mysql:8.0
@@ -205,6 +209,10 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================
+  # BASES DE DATOS - SERVICIOS DESARROLLADOS
+  # ============================================================
+
   mysql-rol:
     image: mysql:8.0
     container_name: mysql-rol
@@ -357,6 +365,10 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================================
+  # MICROSERVICIOS DEL COMPAÑERO
+  # ============================================================
+
   ms-animal-type:
     build:
       context: ./ms-animal-type
@@ -371,6 +383,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -381,7 +394,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -399,6 +412,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -409,7 +423,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -427,6 +441,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -438,7 +453,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       ms-animal-type:
         condition: service_started
     networks:
@@ -458,6 +473,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -471,7 +487,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       ms-race:
         condition: service_started
       ms-size:
@@ -495,6 +511,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -507,7 +524,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       ms-pet:
         condition: service_started
       color-service:
@@ -529,6 +546,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -539,7 +557,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -557,6 +575,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -567,7 +586,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -585,6 +604,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -600,7 +620,7 @@ services:
       rabbitmq:
         condition: service_healthy
       eureka-server:
-        condition: service_healthy
+        condition: service_started
       ms-pet:
         condition: service_started
       ms-report-type:
@@ -613,6 +633,10 @@ services:
         condition: service_started
     networks:
       - petmatch-net
+
+  # ============================================================
+  # MICROSERVICIOS DESARROLLADOS
+  # ============================================================
 
   rol-service:
     build:
@@ -627,14 +651,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-rol:3306/rol_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-rol:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -651,14 +681,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pais:3306/pais_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-pais:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -675,14 +711,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-region:3306/region_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-region:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
       pais-service:
         condition: service_started
     networks:
@@ -701,14 +743,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ciudad:3306/ciudad_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-ciudad:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
       region-service:
         condition: service_started
     networks:
@@ -727,14 +775,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-color:3306/color_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-color:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - petmatch-net
 
@@ -751,16 +805,22 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-usuario:3306/usuario_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
       JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
       JWT_EXPIRATION_MS: 86400000
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-usuario:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
       rol-service:
         condition: service_started
     networks:
@@ -779,14 +839,20 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-configuracion-usuario:3306/configuracion_usuario_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-configuracion-usuario:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
       usuario-service:
         condition: service_started
       color-service:
@@ -807,18 +873,28 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ubicacion:3306/ubicacion_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
       SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: petmatch
       SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     depends_on:
       mysql-ubicacion:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
       ciudad-service:
         condition: service_started
     networks:
       - petmatch-net
+
+  # ============================================================
+  # API GATEWAY
+  # ============================================================
 
   api-gateway:
     build:
@@ -834,18 +910,25 @@ services:
       JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
     depends_on:
       eureka-server:
-        condition: service_healthy
+        condition: service_started
+      usuario-service:
+        condition: service_started
+      rol-service:
+        condition: service_started
       ms-pet:
         condition: service_started
       ms-report:
         condition: service_started
-      usuario-service:
-        condition: service_started
     networks:
       - petmatch-net
 
+# ============================================================
+# VOLÚMENES
+# ============================================================
+
 volumes:
   rabbitmq_data:
+
   mysql_animal_type_data:
   mysql_size_data:
   mysql_race_data:
@@ -854,6 +937,7 @@ volumes:
   mysql_report_type_data:
   mysql_report_status_data:
   mysql_report_data:
+
   mysql_rol_data:
   mysql_pais_data:
   mysql_region_data:
@@ -862,6 +946,10 @@ volumes:
   mysql_usuario_data:
   mysql_configuracion_usuario_data:
   mysql_ubicacion_data:
+
+# ============================================================
+# RED
+# ============================================================
 
 networks:
   petmatch-net:
