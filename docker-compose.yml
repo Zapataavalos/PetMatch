@@ -1,19 +1,9 @@
 version: '3.9'
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ============================================================
 # PetMatch — Arquitectura completa
 # Incluye: Eureka + API Gateway + RabbitMQ + 8 microservicios + 8 MySQL
-#
-# Orden de arranque:
-#   1. RabbitMQ + MySQL (bases)
-#   2. Eureka Server
-#   3. Microservicios (se registran en Eureka)
-#   4. API Gateway (enruta via Eureka)
-#
-# Uso:
-#   docker-compose up --build
-#   docker-compose down -v  (borra datos)
-# ═══════════════════════════════════════════════════════════════════════════
+# ============================================================
 
 services:
   # ============================================================
@@ -954,3 +944,4 @@ volumes:
 networks:
   petmatch-net:
     driver: bridge
+    
