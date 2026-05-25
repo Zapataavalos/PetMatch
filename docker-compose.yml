@@ -17,20 +17,16 @@ version: '3.9'
 
 services:
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # RABBITMQ — mensajería asíncrona
-  # ─────────────────────────────────────────────────────────────────────────
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
     restart: unless-stopped
     ports:
-      - "5672:5672"    # AMQP
-      - "15672:15672"  # Dashboard web
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: petmatch
       RABBITMQ_DEFAULT_PASS: petmatch2026
-      RABBITMQ_DEFAULT_VHOST: /
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -41,10 +37,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # EUREKA SERVER — Service Discovery
-  # Dashboard: http://localhost:8761
-  # ─────────────────────────────────────────────────────────────────────────
   eureka-server:
     build:
       context: ./eureka-server
@@ -61,9 +53,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # BASES DE DATOS MySQL
-  # ─────────────────────────────────────────────────────────────────────────
   mysql-animal-type:
     image: mysql:8.0
     container_name: mysql-animal-type
@@ -216,118 +205,644 @@ services:
       timeout: 5s
       retries: 5
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # MICROSERVICIOS
-  # ─────────────────────────────────────────────────────────────────────────
+  mysql-rol:
+    image: mysql:8.0
+    container_name: mysql-rol
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: rol_db
+    ports:
+      - "3315:3306"
+    volumes:
+      - mysql_rol_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-pais:
+    image: mysql:8.0
+    container_name: mysql-pais
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: pais_db
+    ports:
+      - "3316:3306"
+    volumes:
+      - mysql_pais_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-region:
+    image: mysql:8.0
+    container_name: mysql-region
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: region_db
+    ports:
+      - "3317:3306"
+    volumes:
+      - mysql_region_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-ciudad:
+    image: mysql:8.0
+    container_name: mysql-ciudad
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: ciudad_db
+    ports:
+      - "3318:3306"
+    volumes:
+      - mysql_ciudad_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-color:
+    image: mysql:8.0
+    container_name: mysql-color
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: color_db
+    ports:
+      - "3319:3306"
+    volumes:
+      - mysql_color_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-usuario:
+    image: mysql:8.0
+    container_name: mysql-usuario
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: usuario_db
+    ports:
+      - "3320:3306"
+    volumes:
+      - mysql_usuario_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-configuracion-usuario:
+    image: mysql:8.0
+    container_name: mysql-configuracion-usuario
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: configuracion_usuario_db
+    ports:
+      - "3321:3306"
+    volumes:
+      - mysql_configuracion_usuario_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-ubicacion:
+    image: mysql:8.0
+    container_name: mysql-ubicacion
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: petmatch2026
+      MYSQL_DATABASE: ubicacion_db
+    ports:
+      - "3322:3306"
+    volumes:
+      - mysql_ubicacion_data:/var/lib/mysql
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ms-animal-type:
-    build: { context: ./ms-animal-type, dockerfile: Dockerfile }
+    build:
+      context: ./ms-animal-type
+      dockerfile: Dockerfile
     container_name: ms-animal-type
     restart: unless-stopped
-    ports: ["8083:8083"]
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-animal-type:3306/animal_type_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
     depends_on:
-      mysql-animal-type: { condition: service_healthy }
-      eureka-server:     { condition: service_healthy }
-      rabbitmq:          { condition: service_healthy }
-    networks: [petmatch-net]
+      mysql-animal-type:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - petmatch-net
 
   ms-size:
-    build: { context: ./ms-size, dockerfile: Dockerfile }
+    build:
+      context: ./ms-size
+      dockerfile: Dockerfile
     container_name: ms-size
     restart: unless-stopped
-    ports: ["8084:8084"]
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-size:3306/size_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
     depends_on:
-      mysql-size:    { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
-      rabbitmq:      { condition: service_healthy }
-    networks: [petmatch-net]
+      mysql-size:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - petmatch-net
 
   ms-race:
-    build: { context: ./ms-race, dockerfile: Dockerfile }
+    build:
+      context: ./ms-race
+      dockerfile: Dockerfile
     container_name: ms-race
     restart: unless-stopped
-    ports: ["8082:8082"]
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-race:3306/race_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+      MS_ANIMAL_TYPE_URL: http://ms-animal-type:8083
     depends_on:
-      mysql-race:    { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
-      rabbitmq:      { condition: service_healthy }
-      ms-animal-type: { condition: service_started }
-    networks: [petmatch-net]
+      mysql-race:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      ms-animal-type:
+        condition: service_started
+    networks:
+      - petmatch-net
 
   ms-pet:
-    build: { context: ./ms-pet, dockerfile: Dockerfile }
+    build:
+      context: ./ms-pet
+      dockerfile: Dockerfile
     container_name: ms-pet
     restart: unless-stopped
-    ports: ["8081:8081"]
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pet:3306/pet_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+      MS_RACE_URL: http://ms-race:8082
+      MS_SIZE_URL: http://ms-size:8084
+      MS_USUARIO_URL: http://usuario-service:8094
     depends_on:
-      mysql-pet:     { condition: service_healthy }
-      eureka-server: { condition: service_healthy }
-      rabbitmq:      { condition: service_healthy }
-      ms-race:       { condition: service_started }
-      ms-size:       { condition: service_started }
-    networks: [petmatch-net]
-
-  ms-report-type:
-    build: { context: ./ms-report-type, dockerfile: Dockerfile }
-    container_name: ms-report-type
-    restart: unless-stopped
-    ports: ["8086:8086"]
-    depends_on:
-      mysql-report-type: { condition: service_healthy }
-      eureka-server:     { condition: service_healthy }
-      rabbitmq:          { condition: service_healthy }
-    networks: [petmatch-net]
-
-  ms-report-status:
-    build: { context: ./ms-report-status, dockerfile: Dockerfile }
-    container_name: ms-report-status
-    restart: unless-stopped
-    ports: ["8087:8087"]
-    depends_on:
-      mysql-report-status: { condition: service_healthy }
-      eureka-server:       { condition: service_healthy }
-      rabbitmq:            { condition: service_healthy }
-    networks: [petmatch-net]
+      mysql-pet:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      ms-race:
+        condition: service_started
+      ms-size:
+        condition: service_started
+      usuario-service:
+        condition: service_started
+    networks:
+      - petmatch-net
 
   ms-pet-color:
-    build: { context: ./ms-pet-color, dockerfile: Dockerfile }
+    build:
+      context: ./ms-pet-color
+      dockerfile: Dockerfile
     container_name: ms-pet-color
     restart: unless-stopped
-    ports: ["8085:8085"]
+    ports:
+      - "8085:8085"
+    environment:
+      SERVER_PORT: 8085
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pet-color:3306/pet_color_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+      MS_PET_URL: http://ms-pet:8081
+      MS_COLOR_URL: http://color-service:8093
     depends_on:
-      mysql-pet-color: { condition: service_healthy }
-      eureka-server:   { condition: service_healthy }
-      rabbitmq:        { condition: service_healthy }
-      ms-pet:          { condition: service_started }
-    networks: [petmatch-net]
+      mysql-pet-color:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      ms-pet:
+        condition: service_started
+      color-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
+  ms-report-type:
+    build:
+      context: ./ms-report-type
+      dockerfile: Dockerfile
+    container_name: ms-report-type
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report-type:3306/report_type_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+    depends_on:
+      mysql-report-type:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - petmatch-net
+
+  ms-report-status:
+    build:
+      context: ./ms-report-status
+      dockerfile: Dockerfile
+    container_name: ms-report-status
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      SERVER_PORT: 8087
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report-status:3306/report_status_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+    depends_on:
+      mysql-report-status:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - petmatch-net
 
   ms-report:
-    build: { context: ./ms-report, dockerfile: Dockerfile }
+    build:
+      context: ./ms-report
+      dockerfile: Dockerfile
     container_name: ms-report
     restart: unless-stopped
-    ports: ["8088:8088"]
+    ports:
+      - "8088:8088"
+    environment:
+      SERVER_PORT: 8088
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report:3306/report_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+      MS_PET_URL: http://ms-pet:8081
+      MS_REPORT_TYPE_URL: http://ms-report-type:8086
+      MS_REPORT_STATUS_URL: http://ms-report-status:8087
+      MS_USUARIO_URL: http://usuario-service:8094
+      MS_UBICACION_URL: http://ubicacion-service:8096
     depends_on:
-      mysql-report:       { condition: service_healthy }
-      eureka-server:      { condition: service_healthy }
-      rabbitmq:           { condition: service_healthy }
-      ms-pet:             { condition: service_started }
-      ms-report-type:     { condition: service_started }
-      ms-report-status:   { condition: service_started }
-    networks: [petmatch-net]
+      mysql-report:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      ms-pet:
+        condition: service_started
+      ms-report-type:
+        condition: service_started
+      ms-report-status:
+        condition: service_started
+      usuario-service:
+        condition: service_started
+      ubicacion-service:
+        condition: service_started
+    networks:
+      - petmatch-net
 
-  # ─────────────────────────────────────────────────────────────────────────
-  # API GATEWAY — punto de entrada único (puerto 8080)
-  # ─────────────────────────────────────────────────────────────────────────
+  rol-service:
+    build:
+      context: ./rol-service/rol-service
+      dockerfile: Dockerfile
+    container_name: rol-service
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      SERVER_PORT: 8090
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-rol:3306/rol_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-rol:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - petmatch-net
+
+  pais-service:
+    build:
+      context: ./pais-service/pais-service
+      dockerfile: Dockerfile
+    container_name: pais-service
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      SERVER_PORT: 8091
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pais:3306/pais_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-pais:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - petmatch-net
+
+  region-service:
+    build:
+      context: ./region-service/region-service
+      dockerfile: Dockerfile
+    container_name: region-service
+    restart: unless-stopped
+    ports:
+      - "8097:8097"
+    environment:
+      SERVER_PORT: 8097
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-region:3306/region_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-region:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      pais-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
+  ciudad-service:
+    build:
+      context: ./ciudad-service/ciudad-service
+      dockerfile: Dockerfile
+    container_name: ciudad-service
+    restart: unless-stopped
+    ports:
+      - "8092:8092"
+    environment:
+      SERVER_PORT: 8092
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ciudad:3306/ciudad_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-ciudad:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      region-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
+  color-service:
+    build:
+      context: ./color-service/color-service
+      dockerfile: Dockerfile
+    container_name: color-service
+    restart: unless-stopped
+    ports:
+      - "8093:8093"
+    environment:
+      SERVER_PORT: 8093
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-color:3306/color_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-color:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - petmatch-net
+
+  usuario-service:
+    build:
+      context: ./usuario-service/usuario-service
+      dockerfile: Dockerfile
+    container_name: usuario-service
+    restart: unless-stopped
+    ports:
+      - "8094:8094"
+    environment:
+      SERVER_PORT: 8094
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-usuario:3306/usuario_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
+      JWT_EXPIRATION_MS: 86400000
+    depends_on:
+      mysql-usuario:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rol-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
+  configuracion-usuario-service:
+    build:
+      context: ./configuracion-usuario-service/configuracion-usuario-service
+      dockerfile: Dockerfile
+    container_name: configuracion-usuario-service
+    restart: unless-stopped
+    ports:
+      - "8095:8095"
+    environment:
+      SERVER_PORT: 8095
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-configuracion-usuario:3306/configuracion_usuario_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-configuracion-usuario:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+      color-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
+  ubicacion-service:
+    build:
+      context: ./ubicacion-service/ubicacion-service
+      dockerfile: Dockerfile
+    container_name: ubicacion-service
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    environment:
+      SERVER_PORT: 8096
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-ubicacion:3306/ubicacion_db?createDatabaseIfNotExist=true&serverTimezone=America/Santiago&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: petmatch2026
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: petmatch
+      SPRING_RABBITMQ_PASSWORD: petmatch2026
+    depends_on:
+      mysql-ubicacion:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ciudad-service:
+        condition: service_started
+    networks:
+      - petmatch-net
+
   api-gateway:
-    build: { context: ./api-gateway, dockerfile: Dockerfile }
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
     container_name: api-gateway
     restart: unless-stopped
-    ports: ["8080:8080"]
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
     depends_on:
-      eureka-server:   { condition: service_healthy }
-      ms-pet:          { condition: service_started }
-      ms-report:       { condition: service_started }
-    networks: [petmatch-net]
+      eureka-server:
+        condition: service_healthy
+      ms-pet:
+        condition: service_started
+      ms-report:
+        condition: service_started
+      usuario-service:
+        condition: service_started
+    networks:
+      - petmatch-net
 
 volumes:
   rabbitmq_data:
@@ -339,6 +854,14 @@ volumes:
   mysql_report_type_data:
   mysql_report_status_data:
   mysql_report_data:
+  mysql_rol_data:
+  mysql_pais_data:
+  mysql_region_data:
+  mysql_ciudad_data:
+  mysql_color_data:
+  mysql_usuario_data:
+  mysql_configuracion_usuario_data:
+  mysql_ubicacion_data:
 
 networks:
   petmatch-net:
