@@ -24,11 +24,14 @@ public class JwtService {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + jwtExpirationMs);
 
+        String rolNormalizado = normalizarRol(nombreRol);
+
         return Jwts.builder()
                 .subject(usuario.getEmail())
                 .claim("idUsuario", usuario.getIdUsuario())
                 .claim("idRol", usuario.getIdRol())
-                .claim("rol", nombreRol)
+                .claim("rol", rolNormalizado)
+                .claim("role", rolNormalizado)
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(obtenerClaveFirma())
@@ -40,7 +43,15 @@ public class JwtService {
     }
 
     public String obtenerRolDesdeToken(String token) {
-        return obtenerClaims(token).get("rol", String.class);
+        Claims claims = obtenerClaims(token);
+
+        String rol = claims.get("rol", String.class);
+
+        if (rol == null || rol.isBlank()) {
+            rol = claims.get("role", String.class);
+        }
+
+        return rol;
     }
 
     public boolean tokenValido(String token) {
@@ -62,5 +73,20 @@ public class JwtService {
 
     private SecretKey obtenerClaveFirma() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String normalizarRol(String nombreRol) {
+        if (nombreRol == null || nombreRol.isBlank()) {
+            return "CIUDADANO";
+        }
+
+        String rol = nombreRol.trim().toUpperCase();
+
+        return switch (rol) {
+            case "ADMINISTRADOR" -> "ADMIN";
+            case "USUARIO" -> "CIUDADANO";
+            case "DUEÑO" -> "DUENO";
+            default -> rol;
+        };
     }
 }
