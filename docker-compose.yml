@@ -1,26 +1,69 @@
 version: '3.9'
 
 # ═══════════════════════════════════════════════════════════════════════════
-# PetMatch — docker-compose.yml
-# Levanta los 8 microservicios + sus bases MySQL + API Gateway
+# PetMatch — Arquitectura completa
+# Incluye: Eureka + API Gateway + RabbitMQ + 8 microservicios + 8 MySQL
 #
-# Orden de arranque (depends_on):
-#   MySQL → ms-animal-type → ms-size → ms-race → ms-pet
-#        → ms-report-type → ms-report-status → ms-pet-color → ms-report
+# Orden de arranque:
+#   1. RabbitMQ + MySQL (bases)
+#   2. Eureka Server
+#   3. Microservicios (se registran en Eureka)
+#   4. API Gateway (enruta via Eureka)
 #
 # Uso:
-#   docker-compose up --build          (primera vez)
-#   docker-compose up -d               (en background)
-#   docker-compose down                (detener todo)
-#   docker-compose down -v             (detener + borrar volúmenes)
+#   docker-compose up --build
+#   docker-compose down -v  (borra datos)
 # ═══════════════════════════════════════════════════════════════════════════
 
 services:
 
   # ─────────────────────────────────────────────────────────────────────────
-  # BASES DE DATOS MySQL — una por microservicio (Database per Service)
+  # RABBITMQ — mensajería asíncrona
   # ─────────────────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Dashboard web
+    environment:
+      RABBITMQ_DEFAULT_USER: petmatch
+      RABBITMQ_DEFAULT_PASS: petmatch2026
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
+  # ─────────────────────────────────────────────────────────────────────────
+  # EUREKA SERVER — Service Discovery
+  # Dashboard: http://localhost:8761
+  # ─────────────────────────────────────────────────────────────────────────
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    networks:
+      - petmatch-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # BASES DE DATOS MySQL
+  # ─────────────────────────────────────────────────────────────────────────
   mysql-animal-type:
     image: mysql:8.0
     container_name: mysql-animal-type
@@ -174,184 +217,120 @@ services:
       retries: 5
 
   # ─────────────────────────────────────────────────────────────────────────
-  # MICROSERVICIOS — en orden de dependencia según el MER
+  # MICROSERVICIOS
   # ─────────────────────────────────────────────────────────────────────────
 
   ms-animal-type:
-    build:
-      context: ./ms-animal-type
-      dockerfile: Dockerfile
+    build: { context: ./ms-animal-type, dockerfile: Dockerfile }
     container_name: ms-animal-type
     restart: unless-stopped
-    ports:
-      - "8083:8083"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-animal-type:3306/animal_type_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
+    ports: ["8083:8083"]
     depends_on:
-      mysql-animal-type:
-        condition: service_healthy
-    networks:
-      - petmatch-net
+      mysql-animal-type: { condition: service_healthy }
+      eureka-server:     { condition: service_healthy }
+      rabbitmq:          { condition: service_healthy }
+    networks: [petmatch-net]
 
   ms-size:
-    build:
-      context: ./ms-size
-      dockerfile: Dockerfile
+    build: { context: ./ms-size, dockerfile: Dockerfile }
     container_name: ms-size
     restart: unless-stopped
-    ports:
-      - "8084:8084"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-size:3306/size_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
+    ports: ["8084:8084"]
     depends_on:
-      mysql-size:
-        condition: service_healthy
-    networks:
-      - petmatch-net
+      mysql-size:    { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+      rabbitmq:      { condition: service_healthy }
+    networks: [petmatch-net]
 
   ms-race:
-    build:
-      context: ./ms-race
-      dockerfile: Dockerfile
+    build: { context: ./ms-race, dockerfile: Dockerfile }
     container_name: ms-race
     restart: unless-stopped
-    ports:
-      - "8082:8082"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-race:3306/race_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
-      MS_ANIMAL-TYPE_URL: http://ms-animal-type:8083
+    ports: ["8082:8082"]
     depends_on:
-      mysql-race:
-        condition: service_healthy
-      ms-animal-type:
-        condition: service_started
-    networks:
-      - petmatch-net
+      mysql-race:    { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+      rabbitmq:      { condition: service_healthy }
+      ms-animal-type: { condition: service_started }
+    networks: [petmatch-net]
 
   ms-pet:
-    build:
-      context: ./ms-pet
-      dockerfile: Dockerfile
+    build: { context: ./ms-pet, dockerfile: Dockerfile }
     container_name: ms-pet
     restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pet:3306/pet_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
+    ports: ["8081:8081"]
     depends_on:
-      mysql-pet:
-        condition: service_healthy
-      ms-race:
-        condition: service_started
-      ms-size:
-        condition: service_started
-    networks:
-      - petmatch-net
+      mysql-pet:     { condition: service_healthy }
+      eureka-server: { condition: service_healthy }
+      rabbitmq:      { condition: service_healthy }
+      ms-race:       { condition: service_started }
+      ms-size:       { condition: service_started }
+    networks: [petmatch-net]
 
   ms-report-type:
-    build:
-      context: ./ms-report-type
-      dockerfile: Dockerfile
+    build: { context: ./ms-report-type, dockerfile: Dockerfile }
     container_name: ms-report-type
     restart: unless-stopped
-    ports:
-      - "8086:8086"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report-type:3306/report_type_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
+    ports: ["8086:8086"]
     depends_on:
-      mysql-report-type:
-        condition: service_healthy
-    networks:
-      - petmatch-net
+      mysql-report-type: { condition: service_healthy }
+      eureka-server:     { condition: service_healthy }
+      rabbitmq:          { condition: service_healthy }
+    networks: [petmatch-net]
 
   ms-report-status:
-    build:
-      context: ./ms-report-status
-      dockerfile: Dockerfile
+    build: { context: ./ms-report-status, dockerfile: Dockerfile }
     container_name: ms-report-status
     restart: unless-stopped
-    ports:
-      - "8087:8087"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report-status:3306/report_status_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
+    ports: ["8087:8087"]
     depends_on:
-      mysql-report-status:
-        condition: service_healthy
-    networks:
-      - petmatch-net
+      mysql-report-status: { condition: service_healthy }
+      eureka-server:       { condition: service_healthy }
+      rabbitmq:            { condition: service_healthy }
+    networks: [petmatch-net]
 
   ms-pet-color:
-    build:
-      context: ./ms-pet-color
-      dockerfile: Dockerfile
+    build: { context: ./ms-pet-color, dockerfile: Dockerfile }
     container_name: ms-pet-color
     restart: unless-stopped
-    ports:
-      - "8085:8085"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-pet-color:3306/pet_color_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
-      MS_PET_URL: http://ms-pet:8081
+    ports: ["8085:8085"]
     depends_on:
-      mysql-pet-color:
-        condition: service_healthy
-      ms-pet:
-        condition: service_started
-    networks:
-      - petmatch-net
+      mysql-pet-color: { condition: service_healthy }
+      eureka-server:   { condition: service_healthy }
+      rabbitmq:        { condition: service_healthy }
+      ms-pet:          { condition: service_started }
+    networks: [petmatch-net]
 
   ms-report:
-    build:
-      context: ./ms-report
-      dockerfile: Dockerfile
+    build: { context: ./ms-report, dockerfile: Dockerfile }
     container_name: ms-report
     restart: unless-stopped
-    ports:
-      - "8088:8088"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-report:3306/report_db?createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: petmatch2026
-      JWT_SECRET: PetMatchSecretKey2026_SanosYSalvos
-      MS_PET_URL: http://ms-pet:8081
-      MS_REPORT-TYPE_URL: http://ms-report-type:8086
-      MS_REPORT-STATUS_URL: http://ms-report-status:8087
+    ports: ["8088:8088"]
     depends_on:
-      mysql-report:
-        condition: service_healthy
-      ms-pet:
-        condition: service_started
-      ms-report-type:
-        condition: service_started
-      ms-report-status:
-        condition: service_started
-    networks:
-      - petmatch-net
+      mysql-report:       { condition: service_healthy }
+      eureka-server:      { condition: service_healthy }
+      rabbitmq:           { condition: service_healthy }
+      ms-pet:             { condition: service_started }
+      ms-report-type:     { condition: service_started }
+      ms-report-status:   { condition: service_started }
+    networks: [petmatch-net]
 
-# ─────────────────────────────────────────────────────────────────────────
-# VOLÚMENES — persistencia de datos MySQL
-# ─────────────────────────────────────────────────────────────────────────
+  # ─────────────────────────────────────────────────────────────────────────
+  # API GATEWAY — punto de entrada único (puerto 8080)
+  # ─────────────────────────────────────────────────────────────────────────
+  api-gateway:
+    build: { context: ./api-gateway, dockerfile: Dockerfile }
+    container_name: api-gateway
+    restart: unless-stopped
+    ports: ["8080:8080"]
+    depends_on:
+      eureka-server:   { condition: service_healthy }
+      ms-pet:          { condition: service_started }
+      ms-report:       { condition: service_started }
+    networks: [petmatch-net]
+
 volumes:
+  rabbitmq_data:
   mysql_animal_type_data:
   mysql_size_data:
   mysql_race_data:
@@ -361,9 +340,6 @@ volumes:
   mysql_report_status_data:
   mysql_report_data:
 
-# ─────────────────────────────────────────────────────────────────────────
-# RED — todos los servicios se comunican dentro de esta red
-# ─────────────────────────────────────────────────────────────────────────
 networks:
   petmatch-net:
     driver: bridge
