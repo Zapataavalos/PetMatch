@@ -1,0 +1,13 @@
+package com.petmatch.msreporttype; // OJO: Cambia "msreporttype" si el nombre de tu carpeta es diferente (ej: ms_report_type)
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MsReportTypeApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MsReportTypeApplication.class, args);
+    }
+
+}

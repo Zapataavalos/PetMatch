@@ -1,0 +1,77 @@
+package com.petmatch.msreport.service;
+
+import com.petmatch.msreport.dto.ReportRequest;
+import com.petmatch.msreport.dto.ReportResponse;
+import com.petmatch.msreport.messaging.EventPublisher;
+import com.petmatch.msreport.model.Report;
+import com.petmatch.msreport.repository.ReportRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ReportService {
+
+    private static final String DEFAULT_IMAGE_URL =
+            "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=600&auto=format&fit=crop";
+    private static final double DEFAULT_LATITUDE = -33.4489;
+    private static final double DEFAULT_LONGITUDE = -70.6693;
+
+    private final ReportRepository reportRepository;
+    private final EventPublisher eventPublisher;
+
+    public ReportService(ReportRepository reportRepository, EventPublisher eventPublisher) {
+        this.reportRepository = reportRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public List<ReportResponse> listarReportes() {
+        return reportRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    public ReportResponse crearReporte(ReportRequest request) {
+        Report report = new Report();
+        report.setCodigo("PENDING");
+        report.setNombre(normalizeText(request.nombre(), "Mascota sin nombre"));
+        report.setDescripcion(normalizeText(request.descripcion(), "Sin descripcion"));
+        report.setUbicacion(normalizeText(request.ubicacion(), "Ubicacion no informada"));
+        report.setEstado(request.estado());
+        report.setImagenUrl(normalizeText(request.imagenUrl(), DEFAULT_IMAGE_URL));
+        report.setLatitud(request.latitud() != null ? request.latitud() : DEFAULT_LATITUDE);
+        report.setLongitud(request.longitud() != null ? request.longitud() : DEFAULT_LONGITUDE);
+
+        Report saved = reportRepository.save(report);
+        saved.setCodigo("REP-" + String.format("%03d", saved.getId()));
+        saved = reportRepository.save(saved);
+
+        ReportResponse response = toResponse(saved);
+        eventPublisher.publish("CREATED", "REPORT", response);
+        return response;
+    }
+
+    private ReportResponse toResponse(Report report) {
+        return new ReportResponse(
+                report.getId(),
+                report.getCodigo(),
+                report.getNombre(),
+                report.getDescripcion(),
+                report.getUbicacion(),
+                report.getEstado(),
+                report.getImagenUrl(),
+                report.getLatitud(),
+                report.getLongitud(),
+                report.getCreatedAt()
+        );
+    }
+
+    private String normalizeText(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        return value.trim();
+    }
+}
