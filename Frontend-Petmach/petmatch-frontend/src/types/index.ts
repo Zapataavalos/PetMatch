@@ -7,6 +7,7 @@ export interface AuthResponse {
   nombre: string;
   email: string;
   idRol: number;
+  fechaRegistro?: string;
   rol?: UserRole;
   role?: UserRole;
 }
@@ -31,6 +32,15 @@ export interface Usuario {
   idRol: number;
 }
 
+export interface PerfilRequest {
+  nombre: string;
+  email: string;
+}
+
+export interface PerfilResponse extends AuthResponse {
+  fechaRegistro: string;
+}
+
 export type ReportStatus = "PERDIDO" | "EN_REFUGIO" | "EN_PELIGRO";
 
 export interface ReporteResumen {
@@ -44,6 +54,29 @@ export interface ReporteResumen {
   imagenUrl: string;
   latitud: number;
   longitud: number;
+}
+
+export interface ReportApiResponse {
+  id: number;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  ubicacion: string;
+  estado: ReportStatus;
+  imagenUrl: string;
+  latitud: number;
+  longitud: number;
+  createdAt: string;
+}
+
+export interface ReportCreateRequest {
+  nombre: string;
+  descripcion: string;
+  ubicacion: string;
+  estado: ReportStatus;
+  imagenUrl?: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface Coincidencia {

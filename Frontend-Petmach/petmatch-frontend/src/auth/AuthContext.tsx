@@ -1,23 +1,8 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { authApi } from "../api/authApi";
 import type { AuthResponse, LoginRequest, RegisterRequest, UserRole } from "../types";
+import { AuthContext, TOKEN_KEY, USER_KEY, type AuthContextValue } from "./AuthContextCore";
 import { getRoleFromToken, isAdminRole } from "./jwtUtils";
-
-interface AuthContextValue {
-  user: AuthResponse | null;
-  token: string | null;
-  role: UserRole | null;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  login: (payload: LoginRequest) => Promise<void>;
-  register: (payload: RegisterRequest) => Promise<void>;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-const USER_KEY = "petmatch_user";
-const TOKEN_KEY = "petmatch_token";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthResponse | null>(() => {
@@ -29,27 +14,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return localStorage.getItem(TOKEN_KEY);
   });
 
-  const login = async (payload: LoginRequest) => {
-    const response = await authApi.login(payload);
-
+  const persistSession = useCallback((response: AuthResponse) => {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(USER_KEY, JSON.stringify(response));
 
     setToken(response.token);
     setUser(response);
-  };
+  }, []);
 
-  const register = async (payload: RegisterRequest) => {
+  const login = useCallback(
+    async (payload: LoginRequest) => {
+      const response = await authApi.login(payload);
+      persistSession(response);
+    },
+    [persistSession]
+  );
+
+  const register = useCallback(async (payload: RegisterRequest) => {
     await authApi.register(payload);
-  };
+  }, []);
 
-  const logout = () => {
+  const updateSession = useCallback(
+    (response: AuthResponse) => {
+      persistSession(response);
+    },
+    [persistSession]
+  );
+
+  const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
 
     setToken(null);
     setUser(null);
-  };
+  }, []);
 
   const role = useMemo<UserRole | null>(() => {
     const tokenRole = getRoleFromToken(token);
@@ -70,20 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin: isAdminRole(role),
       login,
       register,
+      updateSession,
       logout,
     }),
-    [user, token, role]
+    [user, token, role, login, register, updateSession, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error("useAuth debe usarse dentro de AuthProvider");
-  }
-
-  return context;
 }

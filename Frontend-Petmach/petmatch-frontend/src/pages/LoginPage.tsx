@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 
 export function LoginPage() {
   const { login } = useAuth();

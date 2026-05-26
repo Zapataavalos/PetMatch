@@ -1,21 +1,19 @@
 package com.petmatch.gateway.filter;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-/**
- * Filtro global JWT — sección 4.1 y 8.1 del informe.
- * Valida el token ANTES de redirigir al microservicio.
- * Si el token es inválido o ausente → 401 Unauthorized.
- */
 @Component
 public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
@@ -26,13 +24,13 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Rutas públicas sin token
-        if (path.contains("/actuator/health")) {
+        if (isPublicRoute(path) || exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
             return chain.filter(exchange);
         }
 
         String authHeader = exchange.getRequest()
-                .getHeaders().getFirst("Authorization");
+                .getHeaders()
+                .getFirst("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
@@ -46,13 +44,13 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
                     .parseClaimsJws(authHeader.substring(7))
                     .getBody();
 
-            // Propaga el rol al microservicio destino via header
             exchange = exchange.mutate()
-                    .request(r -> r.header("X-User-Role",
-                            claims.get("role", String.class)))
+                    .request(request -> request.header(
+                            "X-User-Role",
+                            claims.get("role", String.class)
+                    ))
                     .build();
-
-        } catch (JwtException e) {
+        } catch (JwtException exception) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -61,5 +59,14 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     }
 
     @Override
-    public int getOrder() { return -1; }
+    public int getOrder() {
+        return -1;
+    }
+
+    private boolean isPublicRoute(String path) {
+        return path.startsWith("/api/v1/auth/")
+                || path.startsWith("/actuator/health")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs");
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.Date;
 
 @Service
@@ -80,12 +81,14 @@ public class JwtService {
             return "CIUDADANO";
         }
 
-        String rol = nombreRol.trim().toUpperCase();
+        String rol = Normalizer
+                .normalize(nombreRol.trim().toUpperCase(), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
 
         return switch (rol) {
             case "ADMINISTRADOR" -> "ADMIN";
             case "USUARIO" -> "CIUDADANO";
-            case "DUEÑO" -> "DUENO";
+            case "DUENO" -> "DUENO";
             default -> rol;
         };
     }

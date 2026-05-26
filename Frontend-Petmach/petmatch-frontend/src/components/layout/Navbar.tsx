@@ -10,7 +10,7 @@ import {
   User,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 
 const baseNavItems = [
   {
@@ -122,7 +122,7 @@ export function Navbar() {
           <Bell size={20} className="text-[#a7a7b2]" />
 
           <button
-            onClick={() => navigate("/reportes")}
+            onClick={() => navigate("/nuevo-reporte")}
             className="flex h-11 items-center gap-2 rounded-xl bg-[#f5c400] px-5 font-black text-black transition hover:bg-[#ffd21a]"
           >
             <Plus size={19} />

@@ -1,42 +1,113 @@
-import { MapPin, Upload, X } from "lucide-react";
+import { isAxiosError } from "axios";
+import { LocateFixed, MapPin, X } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { reportApi } from "../../api/reportApi";
+import type { ReportApiResponse, ReportStatus } from "../../types";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
 interface NewReportModalProps {
   open: boolean;
   onClose: () => void;
+  onCreated?: (report: ReportApiResponse) => void;
 }
 
-type ReportType = "PERDIDA" | "RESGUARDADA" | "EN_PELIGRO";
-
-export function NewReportModal({ open, onClose }: NewReportModalProps) {
-  const [tipo, setTipo] = useState<ReportType>("PERDIDA");
+export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps) {
+  const [estado, setEstado] = useState<ReportStatus>("PERDIDO");
+  const [nombre, setNombre] = useState("");
+  const [ubicacion, setUbicacion] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [imagenUrl, setImagenUrl] = useState("");
+  const [latitud, setLatitud] = useState<number | null>(null);
+  const [longitud, setLongitud] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   if (!open) {
     return null;
   }
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    onClose();
+    setSaving(true);
+    setError("");
+
+    try {
+      const report = await reportApi.create({
+        nombre: nombre.trim() || "Mascota sin nombre",
+        ubicacion: ubicacion.trim(),
+        descripcion: descripcion.trim(),
+        estado,
+        imagenUrl: imagenUrl.trim() || undefined,
+        latitud: latitud ?? undefined,
+        longitud: longitud ?? undefined,
+      });
+
+      onCreated?.(report);
+      setNombre("");
+      setUbicacion("");
+      setDescripcion("");
+      setImagenUrl("");
+      setLatitud(null);
+      setLongitud(null);
+      setEstado("PERDIDO");
+      onClose();
+    } catch (error) {
+      setError(getReportErrorMessage(error));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const types: { value: ReportType; label: string; color: string }[] = [
+  const handleUseCurrentLocation = () => {
+    setError("");
+
+    if (!navigator.geolocation) {
+      setError("Tu navegador no permite obtener la ubicacion.");
+      return;
+    }
+
+    setLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const currentLatitud = Number(position.coords.latitude.toFixed(6));
+        const currentLongitud = Number(position.coords.longitude.toFixed(6));
+        const locationLabel = `Mi ubicacion actual (${currentLatitud}, ${currentLongitud})`;
+
+        setLatitud(currentLatitud);
+        setLongitud(currentLongitud);
+        setUbicacion(locationLabel);
+        setLocating(false);
+      },
+      (error) => {
+        setError(getGeolocationErrorMessage(error));
+        setLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 30000,
+        timeout: 10000,
+      }
+    );
+  };
+
+  const types: { value: ReportStatus; label: string; color: string }[] = [
     {
-      value: "PERDIDA",
+      value: "PERDIDO",
       label: "Perdida",
       color: "bg-[#f5c400]",
     },
     {
-      value: "RESGUARDADA",
-      label: "Resguardada",
+      value: "EN_REFUGIO",
+      label: "En refugio",
       color: "bg-[#10b981]",
     },
     {
       value: "EN_PELIGRO",
-      label: "En Peligro",
+      label: "En peligro",
       color: "bg-[#ef4444]",
     },
   ];
@@ -48,7 +119,7 @@ export function NewReportModal({ open, onClose }: NewReportModalProps) {
         className="max-h-[90vh] w-full max-w-[640px] overflow-hidden rounded-2xl border border-[#2a2a30] bg-[#17171b] shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-[#24242a] px-7 py-6">
-          <h2 className="text-2xl font-black">Nuevo Reporte</h2>
+          <h2 className="text-2xl font-black">Nuevo reporte</h2>
 
           <button
             type="button"
@@ -60,6 +131,12 @@ export function NewReportModal({ open, onClose }: NewReportModalProps) {
         </div>
 
         <div className="max-h-[65vh] space-y-7 overflow-y-auto px-7 py-6">
+          {error && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+              {error}
+            </div>
+          )}
+
           <div>
             <span className="mb-3 block font-bold text-[#a8a8b3]">
               Tipo de reporte
@@ -70,9 +147,9 @@ export function NewReportModal({ open, onClose }: NewReportModalProps) {
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => setTipo(item.value)}
+                  onClick={() => setEstado(item.value)}
                   className={`h-20 rounded-xl border font-black transition ${
-                    tipo === item.value
+                    estado === item.value
                       ? "border-[#f5c400] bg-[#f5c400]/15 text-[#f5c400]"
                       : "border-[#292930] bg-[#09090b] text-[#9d9daa] hover:border-[#3a3a42]"
                   }`}
@@ -86,78 +163,115 @@ export function NewReportModal({ open, onClose }: NewReportModalProps) {
             </div>
           </div>
 
-          <div>
-            <span className="mb-3 block font-bold text-[#a8a8b3]">
-              Foto opcional
-            </span>
-
-            <div className="flex h-44 flex-col items-center justify-center rounded-xl border border-dashed border-[#34343a] bg-[#111114] text-center">
-              <Upload size={34} className="text-[#777783]" />
-              <p className="mt-3 text-[#8f8f9a]">
-                Sube o arrastra una imagen aquí
-              </p>
-              <p className="mt-1 text-sm text-[#666672]">
-                JPG, PNG hasta 5MB
-              </p>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-                Tipo de Animal
-              </span>
-              <select className="h-14 w-full rounded-xl border border-[#2b2b31] bg-[#09090b] px-4 text-white outline-none focus:border-[#f5c400]">
-                <option>Perro</option>
-                <option>Gato</option>
-                <option>Otro</option>
-              </select>
-            </label>
+            <Input
+              label="Nombre de la mascota"
+              placeholder="Ej: Max"
+              value={nombre}
+              onChange={(event) => setNombre(event.target.value)}
+              maxLength={100}
+            />
 
-            <Input label="Nombre (si se sabe)" placeholder="Ej: Max" />
+            <Input
+              label="Foto por URL"
+              placeholder="https://..."
+              value={imagenUrl}
+              onChange={(event) => setImagenUrl(event.target.value)}
+            />
           </div>
 
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-              Ubicación
+              Ubicacion
             </span>
 
-            <div className="flex h-14 items-center gap-3 rounded-xl border border-[#2b2b31] bg-[#09090b] px-4">
-              <MapPin size={20} className="text-[#81818b]" />
-              <input
-                placeholder="Dirección o punto de referencia"
-                className="flex-1 bg-transparent text-white outline-none placeholder:text-[#6f6f79]"
-              />
-
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <div className="flex h-14 items-center gap-3 rounded-xl border border-[#2b2b31] bg-[#09090b] px-4">
+                <MapPin size={20} className="shrink-0 text-[#81818b]" />
+                <input
+                  value={ubicacion}
+                  onChange={(event) => setUbicacion(event.target.value)}
+                  required
+                  maxLength={180}
+                  placeholder="Direccion o punto de referencia"
+                  className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-[#6f6f79]"
+                />
+              </div>
               <button
                 type="button"
-                className="rounded-lg bg-[#242429] px-3 py-2 text-sm font-black text-white"
+                onClick={handleUseCurrentLocation}
+                disabled={locating || saving}
+                className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#242429] px-4 text-sm font-black text-white transition hover:bg-[#303036] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                Usar GPS
+                <LocateFixed size={16} />
+                {locating ? "Ubicando..." : "Usar mi ubicacion"}
               </button>
             </div>
           </label>
 
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-              Descripción adicional
+              Descripcion adicional
             </span>
 
             <textarea
               rows={4}
-              placeholder="Describe color, tamaño, collar, comportamiento u otra información importante..."
+              value={descripcion}
+              onChange={(event) => setDescripcion(event.target.value)}
+              required
+              maxLength={500}
+              placeholder="Describe color, tamano, collar, comportamiento u otra informacion importante..."
               className="w-full resize-none rounded-xl border border-[#2b2b31] bg-[#09090b] p-4 text-white outline-none placeholder:text-[#6f6f79] focus:border-[#f5c400]"
             />
           </label>
         </div>
 
         <div className="flex items-center justify-end gap-4 border-t border-[#24242a] px-7 py-5">
-          <Button type="button" variant="ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>
-          <Button type="submit">Publicar Reporte</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? "Publicando..." : "Publicar reporte"}
+          </Button>
         </div>
       </form>
     </div>
   );
+}
+
+interface ApiErrorResponse {
+  message?: string;
+  errors?: Record<string, string>;
+}
+
+function getReportErrorMessage(error: unknown) {
+  if (isAxiosError<ApiErrorResponse>(error)) {
+    const data = error.response?.data;
+
+    if (data?.errors) {
+      return Object.values(data.errors).join(" ");
+    }
+
+    if (data?.message) {
+      return data.message;
+    }
+  }
+
+  return "No fue posible publicar el reporte.";
+}
+
+function getGeolocationErrorMessage(error: GeolocationPositionError) {
+  if (error.code === error.PERMISSION_DENIED) {
+    return "Permiso de ubicacion denegado. Puedes activarlo en el navegador o escribir la ubicacion manualmente.";
+  }
+
+  if (error.code === error.POSITION_UNAVAILABLE) {
+    return "No fue posible detectar tu ubicacion actual.";
+  }
+
+  if (error.code === error.TIMEOUT) {
+    return "La solicitud de ubicacion tardo demasiado. Intenta nuevamente.";
+  }
+
+  return "No fue posible obtener tu ubicacion.";
 }

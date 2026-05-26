@@ -2,6 +2,8 @@ package com.petmatch.usuario_service.Service;
 
 import com.petmatch.usuario_service.DTO.AuthResponseDTO;
 import com.petmatch.usuario_service.DTO.LoginRequestDTO;
+import com.petmatch.usuario_service.DTO.PerfilRequestDTO;
+import com.petmatch.usuario_service.DTO.PerfilResponseDTO;
 import com.petmatch.usuario_service.DTO.UsuarioRequestDTO;
 import com.petmatch.usuario_service.DTO.UsuarioResponseDTO;
 import com.petmatch.usuario_service.Exception.ResourceNotFoundException;
@@ -61,6 +63,28 @@ public class AuthService {
                 usuario.getNombre(),
                 usuario.getEmail(),
                 usuario.getIdRol()
+        );
+    }
+
+    public PerfilResponseDTO actualizarPerfil(String emailActual, PerfilRequestDTO requestDTO) {
+        UsuarioResponseDTO perfilActualizado = usuarioService.actualizarPerfilPorEmail(emailActual, requestDTO);
+
+        Usuario usuario = usuarioRepository.findById(perfilActualizado.idUsuario())
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontro el usuario actualizado"));
+
+        RolReferencia rol = rolReferenciaRepository.findByIdRolAndActivoTrue(usuario.getIdRol())
+                .orElseThrow(() -> new ResourceNotFoundException("El rol del usuario no se encuentra activo"));
+
+        String token = jwtService.generarToken(usuario, rol.getNombreRol());
+
+        return new PerfilResponseDTO(
+                token,
+                "Bearer",
+                usuario.getIdUsuario(),
+                usuario.getNombre(),
+                usuario.getEmail(),
+                usuario.getIdRol(),
+                usuario.getFechaRegistro()
         );
     }
 }

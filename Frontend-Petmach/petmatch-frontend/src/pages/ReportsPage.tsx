@@ -1,20 +1,86 @@
 import { AlertTriangle, FileText, Plus, Search } from "lucide-react";
-import { useState } from "react";
-import { Button } from "../components/ui/Button";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { reportApi } from "../api/reportApi";
 import { ReportCard } from "../components/reports/ReportCard";
-import { StatusDot } from "../components/reports/StatusBadge";
 import { NewReportModal } from "../components/reports/NewReportModal";
-import { mockReportes } from "../data/mockData";
-import type { ReportStatus } from "../types";
+import { StatusDot } from "../components/reports/StatusBadge";
+import { Button } from "../components/ui/Button";
+import type { ReportApiResponse, ReportStatus, ReporteResumen } from "../types";
 
 export function ReportsPage() {
+  const location = useLocation();
   const [filter, setFilter] = useState<ReportStatus | "TODOS">("TODOS");
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(location.pathname === "/nuevo-reporte");
+  const [search, setSearch] = useState("");
+  const [reportes, setReportes] = useState<ReporteResumen[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const reportesFiltrados =
-    filter === "TODOS"
-      ? mockReportes
-      : mockReportes.filter((reporte) => reporte.estado === filter);
+  useEffect(() => {
+    if (location.pathname === "/nuevo-reporte") {
+      setModalOpen(true);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadReports() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await reportApi.getAll();
+
+        if (active) {
+          setReportes(data.map(mapReport));
+        }
+      } catch {
+        if (active) {
+          setError("No fue posible cargar los reportes de mascotas.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadReports();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const reportesFiltrados = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return reportes.filter((reporte) => {
+      const matchesFilter = filter === "TODOS" || reporte.estado === filter;
+      const matchesSearch =
+        !query ||
+        reporte.codigo.toLowerCase().includes(query) ||
+        reporte.nombre.toLowerCase().includes(query) ||
+        reporte.ubicacion.toLowerCase().includes(query);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [filter, reportes, search]);
+
+  const counts = useMemo(
+    () => ({
+      PERDIDO: reportes.filter((reporte) => reporte.estado === "PERDIDO").length,
+      EN_REFUGIO: reportes.filter((reporte) => reporte.estado === "EN_REFUGIO").length,
+      EN_PELIGRO: reportes.filter((reporte) => reporte.estado === "EN_PELIGRO").length,
+    }),
+    [reportes]
+  );
+
+  const handleCreated = (report: ReportApiResponse) => {
+    setReportes((current) => [mapReport(report), ...current]);
+  };
 
   return (
     <section className="mx-auto max-w-7xl px-8 py-12">
@@ -22,18 +88,17 @@ export function ReportsPage() {
         <div>
           <div className="flex items-center gap-4">
             <FileText size={38} className="text-[#f5c400]" />
-            <h1 className="text-4xl font-black">Reportes</h1>
+            <h1 className="text-4xl font-black">Reportes de mascotas</h1>
           </div>
 
           <p className="mt-4 text-lg text-[#aaaaba]">
-            Consulta, filtra y administra reportes de mascotas perdidas,
-            encontradas o en peligro.
+            Reportes reales registrados en el servicio de mascotas.
           </p>
         </div>
 
         <Button onClick={() => setModalOpen(true)}>
           <Plus className="mr-2 inline" size={19} />
-          Nuevo Reporte
+          Nuevo reporte
         </Button>
       </div>
 
@@ -41,51 +106,58 @@ export function ReportsPage() {
         <div className="flex h-12 w-full items-center gap-3 rounded-xl border border-[#2a2a30] bg-[#17171b] px-4 lg:w-[420px]">
           <Search size={20} className="text-[#85858f]" />
           <input
-            placeholder="Buscar por código, mascota o ubicación..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por codigo, mascota o ubicacion..."
             className="w-full bg-transparent text-white outline-none placeholder:text-[#6f6f79]"
           />
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setFilter("TODOS")}
-            className={`rounded-full border px-4 py-2 text-sm font-bold ${
-              filter === "TODOS"
-                ? "border-[#383840] bg-[#242429] text-white"
-                : "border-[#2a2a30] text-[#9c9ca8]"
-            }`}
-          >
+          <FilterButton active={filter === "TODOS"} onClick={() => setFilter("TODOS")}>
             Todos
-          </button>
-
-          <button
-            onClick={() => setFilter("PERDIDO")}
-            className="rounded-full border border-[#2a2a30] px-4 py-2 text-sm font-bold text-[#9c9ca8]"
-          >
+          </FilterButton>
+          <FilterButton active={filter === "PERDIDO"} onClick={() => setFilter("PERDIDO")}>
             <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#f5c400]" />
             Perdidos
-          </button>
-
-          <button
+          </FilterButton>
+          <FilterButton
+            active={filter === "EN_REFUGIO"}
             onClick={() => setFilter("EN_REFUGIO")}
-            className="rounded-full border border-[#2a2a30] px-4 py-2 text-sm font-bold text-[#9c9ca8]"
           >
             <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#10b981]" />
             En refugio
-          </button>
-
-          <button
+          </FilterButton>
+          <FilterButton
+            active={filter === "EN_PELIGRO"}
             onClick={() => setFilter("EN_PELIGRO")}
-            className="rounded-full border border-[#2a2a30] px-4 py-2 text-sm font-bold text-[#9c9ca8]"
           >
             <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#ef4444]" />
             En peligro
-          </button>
+          </FilterButton>
         </div>
       </div>
 
+      {error && (
+        <div className="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5">
+          {loading && (
+            <div className="rounded-2xl border border-[#24242a] bg-[#17171b] p-6 text-[#aaaaba]">
+              Cargando reportes...
+            </div>
+          )}
+
+          {!loading && reportesFiltrados.length === 0 && (
+            <div className="rounded-2xl border border-[#24242a] bg-[#17171b] p-6 text-[#aaaaba]">
+              No hay reportes para mostrar.
+            </div>
+          )}
+
           {reportesFiltrados.map((reporte) => (
             <ReportCard key={reporte.id} reporte={reporte} />
           ))}
@@ -98,34 +170,104 @@ export function ReportsPage() {
           </div>
 
           <div className="mt-6 space-y-4 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#aaaaba]">
-                <StatusDot status="PERDIDO" />
-                Perdidos
-              </span>
-              <b>1</b>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#aaaaba]">
-                <StatusDot status="EN_REFUGIO" />
-                En refugio
-              </span>
-              <b>1</b>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-[#aaaaba]">
-                <StatusDot status="EN_PELIGRO" />
-                En peligro
-              </span>
-              <b>1</b>
-            </div>
+            <SummaryRow status="PERDIDO" label="Perdidos" value={counts.PERDIDO} />
+            <SummaryRow status="EN_REFUGIO" label="En refugio" value={counts.EN_REFUGIO} />
+            <SummaryRow status="EN_PELIGRO" label="En peligro" value={counts.EN_PELIGRO} />
           </div>
         </aside>
       </div>
 
-      <NewReportModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewReportModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={handleCreated}
+      />
     </section>
   );
+}
+
+function FilterButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-full border px-4 py-2 text-sm font-bold ${
+        active
+          ? "border-[#383840] bg-[#242429] text-white"
+          : "border-[#2a2a30] text-[#9c9ca8]"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function SummaryRow({
+  status,
+  label,
+  value,
+}: {
+  status: ReportStatus;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="flex items-center gap-2 text-[#aaaaba]">
+        <StatusDot status={status} />
+        {label}
+      </span>
+      <b>{value}</b>
+    </div>
+  );
+}
+
+function mapReport(report: ReportApiResponse): ReporteResumen {
+  return {
+    id: report.id,
+    codigo: report.codigo,
+    nombre: report.nombre,
+    descripcion: report.descripcion,
+    ubicacion: report.ubicacion,
+    tiempo: formatRelativeTime(report.createdAt),
+    estado: report.estado,
+    imagenUrl: report.imagenUrl,
+    latitud: report.latitud,
+    longitud: report.longitud,
+  };
+}
+
+function formatRelativeTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+
+  if (diffMinutes < 1) {
+    return "Hace instantes";
+  }
+
+  if (diffMinutes < 60) {
+    return `Hace ${diffMinutes} min`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffHours < 24) {
+    return `Hace ${diffHours} h`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `Hace ${diffDays} d`;
 }

@@ -1,5 +1,6 @@
 package com.petmatch.usuario_service.Service;
 
+import com.petmatch.usuario_service.DTO.PerfilRequestDTO;
 import com.petmatch.usuario_service.DTO.UsuarioRequestDTO;
 import com.petmatch.usuario_service.DTO.UsuarioResponseDTO;
 import com.petmatch.usuario_service.Event.UsuarioEventPublisher;
@@ -55,6 +56,11 @@ public class UsuarioService {
         return convertirAResponseDTO(usuario);
     }
 
+    public UsuarioResponseDTO buscarUsuarioPorEmail(String email) {
+        Usuario usuario = obtenerUsuarioPorEmail(email);
+        return convertirAResponseDTO(usuario);
+    }
+
     public UsuarioResponseDTO crearUsuario(UsuarioRequestDTO requestDTO) {
         String nombreNormalizado = normalizarNombre(requestDTO.nombre());
         String emailNormalizado = normalizarEmail(requestDTO.email());
@@ -103,6 +109,26 @@ public class UsuarioService {
         return convertirAResponseDTO(usuarioActualizado);
     }
 
+    public UsuarioResponseDTO actualizarPerfilPorEmail(String emailActual, PerfilRequestDTO requestDTO) {
+        Usuario usuario = obtenerUsuarioPorEmail(emailActual);
+
+        String nombreNormalizado = normalizarNombre(requestDTO.nombre());
+        String emailNormalizado = normalizarEmail(requestDTO.email());
+
+        if (usuarioRepository.existsByEmailIgnoreCaseAndIdUsuarioNot(emailNormalizado, usuario.getIdUsuario())) {
+            throw new BadRequestException("Ya existe otro usuario registrado con el email: " + emailNormalizado);
+        }
+
+        usuario.setNombre(nombreNormalizado);
+        usuario.setEmail(emailNormalizado);
+
+        Usuario usuarioActualizado = usuarioRepository.save(usuario);
+
+        usuarioEventPublisher.publicarUsuarioActualizado(usuarioActualizado);
+
+        return convertirAResponseDTO(usuarioActualizado);
+    }
+
     public void eliminarUsuario(Integer idUsuario) {
         Usuario usuario = obtenerUsuarioPorId(idUsuario);
 
@@ -114,6 +140,11 @@ public class UsuarioService {
     private Usuario obtenerUsuarioPorId(Integer idUsuario) {
         return usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new ResourceNotFoundException("No se encontró el usuario con ID: " + idUsuario));
+    }
+
+    private Usuario obtenerUsuarioPorEmail(String email) {
+        return usuarioRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontro el usuario autenticado"));
     }
 
     private void validarRolExisteActivo(Integer idRol) {

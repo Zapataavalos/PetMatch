@@ -1,5 +1,3 @@
-version: '3.9'
-
 # ============================================================
 # PetMatch — Arquitectura completa
 # Incluye: Eureka + API Gateway + RabbitMQ + 8 microservicios + 8 MySQL
