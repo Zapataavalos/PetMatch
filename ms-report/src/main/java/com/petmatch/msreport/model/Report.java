@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -36,7 +37,8 @@ public class Report {
     @Column(nullable = false, length = 30)
     private ReportStatus estado;
 
-    @Column(nullable = false, length = 600)
+    @Lob
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String imagenUrl;
 
     @Column(nullable = false)

@@ -1,25 +1,101 @@
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { reportApi } from "../api/reportApi";
 import { InteractiveMap } from "../components/map/InteractiveMap";
 import { NewReportModal } from "../components/reports/NewReportModal";
 import { ReportCard } from "../components/reports/ReportCard";
 import { StatusDot } from "../components/reports/StatusBadge";
-import { mockReportes } from "../data/mockData";
-import type { ReportStatus } from "../types";
+import type { ReportApiResponse, ReportStatus, ReporteResumen } from "../types";
+import { mapReport } from "../utils/reportMapper";
 
 export function MapPage() {
   const [filter, setFilter] = useState<ReportStatus | "TODOS">("TODOS");
   const [modalOpen, setModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [reportes, setReportes] = useState<ReporteResumen[]>([]);
+  const [rescuingIds, setRescuingIds] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const reportesFiltrados =
-    filter === "TODOS"
-      ? mockReportes
-      : mockReportes.filter((reporte) => reporte.estado === filter);
+  useEffect(() => {
+    let active = true;
+
+    async function loadReports() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await reportApi.getAll();
+
+        if (active) {
+          setReportes(data.map(mapReport));
+        }
+      } catch {
+        if (active) {
+          setError("No fue posible cargar los reportes en el mapa.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadReports();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const reportesFiltrados = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return reportes.filter((reporte) => {
+      const matchesFilter = filter === "TODOS" || reporte.estado === filter;
+      const matchesSearch =
+        !query ||
+        reporte.codigo.toLowerCase().includes(query) ||
+        reporte.nombre.toLowerCase().includes(query) ||
+        reporte.ubicacion.toLowerCase().includes(query);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [filter, reportes, search]);
+
+  const handleCreated = (report: ReportApiResponse) => {
+    setReportes((current) => [mapReport(report), ...current]);
+  };
+
+  const handleRescued = async (reporte: ReporteResumen) => {
+    setError("");
+    setRescuingIds((current) => new Set(current).add(reporte.id));
+    setReportes((current) => current.filter((item) => item.id !== reporte.id));
+
+    try {
+      await reportApi.delete(reporte.id);
+    } catch {
+      setError("No fue posible marcar el reporte como rescatado.");
+      setReportes((current) =>
+        current.some((item) => item.id === reporte.id) ? current : [reporte, ...current]
+      );
+    } finally {
+      setRescuingIds((current) => {
+        const next = new Set(current);
+        next.delete(reporte.id);
+        return next;
+      });
+    }
+  };
 
   return (
     <section className="relative h-[calc(100vh-74px)] overflow-hidden bg-[#050506]">
       <div className="absolute inset-0 right-[28rem]">
-        <InteractiveMap reportes={reportesFiltrados} />
+        <InteractiveMap
+          reportes={reportesFiltrados}
+          onRescued={handleRescued}
+          rescuingIds={rescuingIds}
+        />
 
         <div className="absolute bottom-5 left-5 z-[500] rounded-2xl border border-[#2c2c32] bg-[#1b1b20]/95 p-4 backdrop-blur">
           <h3 className="mb-3 text-sm font-black text-[#a8a8b3]">ESTADO</h3>
@@ -50,6 +126,8 @@ export function MapPage() {
           <div className="mt-5 flex h-12 items-center gap-3 rounded-xl border border-[#2a2a30] bg-[#09090b] px-4">
             <Search size={20} className="text-[#85858f]" />
             <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por zona o raza..."
               className="w-full bg-transparent text-white outline-none placeholder:text-[#6f6f79]"
             />
@@ -105,14 +183,41 @@ export function MapPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="mx-5 mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
         <div className="h-[calc(100vh-74px-180px)] space-y-4 overflow-y-auto p-5">
+          {loading && (
+            <div className="rounded-xl border border-[#24242a] bg-[#09090b] p-4 text-sm text-[#aaaaba]">
+              Cargando reportes...
+            </div>
+          )}
+
+          {!loading && reportesFiltrados.length === 0 && (
+            <div className="rounded-xl border border-[#24242a] bg-[#09090b] p-4 text-sm text-[#aaaaba]">
+              No hay reportes para mostrar.
+            </div>
+          )}
+
           {reportesFiltrados.map((reporte) => (
-            <ReportCard key={reporte.id} reporte={reporte} />
+            <ReportCard
+              key={reporte.id}
+              reporte={reporte}
+              onRescued={handleRescued}
+              rescuing={rescuingIds.has(reporte.id)}
+            />
           ))}
         </div>
       </aside>
 
-      <NewReportModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <NewReportModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={handleCreated}
+      />
 
       <button
         onClick={() => setModalOpen(true)}

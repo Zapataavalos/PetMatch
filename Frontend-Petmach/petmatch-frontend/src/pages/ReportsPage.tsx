@@ -6,6 +6,7 @@ import { ReportCard } from "../components/reports/ReportCard";
 import { NewReportModal } from "../components/reports/NewReportModal";
 import { StatusDot } from "../components/reports/StatusBadge";
 import { Button } from "../components/ui/Button";
+import { mapReport } from "../utils/reportMapper";
 import type { ReportApiResponse, ReportStatus, ReporteResumen } from "../types";
 
 export function ReportsPage() {
@@ -14,6 +15,7 @@ export function ReportsPage() {
   const [modalOpen, setModalOpen] = useState(location.pathname === "/nuevo-reporte");
   const [search, setSearch] = useState("");
   const [reportes, setReportes] = useState<ReporteResumen[]>([]);
+  const [rescuingIds, setRescuingIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -80,6 +82,27 @@ export function ReportsPage() {
 
   const handleCreated = (report: ReportApiResponse) => {
     setReportes((current) => [mapReport(report), ...current]);
+  };
+
+  const handleRescued = async (reporte: ReporteResumen) => {
+    setError("");
+    setRescuingIds((current) => new Set(current).add(reporte.id));
+    setReportes((current) => current.filter((item) => item.id !== reporte.id));
+
+    try {
+      await reportApi.delete(reporte.id);
+    } catch {
+      setError("No fue posible marcar el reporte como rescatado.");
+      setReportes((current) =>
+        current.some((item) => item.id === reporte.id) ? current : [reporte, ...current]
+      );
+    } finally {
+      setRescuingIds((current) => {
+        const next = new Set(current);
+        next.delete(reporte.id);
+        return next;
+      });
+    }
   };
 
   return (
@@ -159,7 +182,12 @@ export function ReportsPage() {
           )}
 
           {reportesFiltrados.map((reporte) => (
-            <ReportCard key={reporte.id} reporte={reporte} />
+            <ReportCard
+              key={reporte.id}
+              reporte={reporte}
+              onRescued={handleRescued}
+              rescuing={rescuingIds.has(reporte.id)}
+            />
           ))}
         </div>
 
@@ -227,47 +255,4 @@ function SummaryRow({
       <b>{value}</b>
     </div>
   );
-}
-
-function mapReport(report: ReportApiResponse): ReporteResumen {
-  return {
-    id: report.id,
-    codigo: report.codigo,
-    nombre: report.nombre,
-    descripcion: report.descripcion,
-    ubicacion: report.ubicacion,
-    tiempo: formatRelativeTime(report.createdAt),
-    estado: report.estado,
-    imagenUrl: report.imagenUrl,
-    latitud: report.latitud,
-    longitud: report.longitud,
-  };
-}
-
-function formatRelativeTime(value: string) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Fecha no disponible";
-  }
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
-
-  if (diffMinutes < 1) {
-    return "Hace instantes";
-  }
-
-  if (diffMinutes < 60) {
-    return `Hace ${diffMinutes} min`;
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60);
-
-  if (diffHours < 24) {
-    return `Hace ${diffHours} h`;
-  }
-
-  const diffDays = Math.floor(diffHours / 24);
-  return `Hace ${diffDays} d`;
 }

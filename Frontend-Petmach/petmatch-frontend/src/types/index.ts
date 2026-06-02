@@ -79,6 +79,47 @@ export interface ReportCreateRequest {
   longitud?: number;
 }
 
+export interface RegionCatalogo {
+  idRegion: number;
+  nombreRegion: string;
+  idPais: number;
+}
+
+export interface CiudadCatalogo {
+  idCiudad: number;
+  nombreCiudad: string;
+  idRegion: number;
+}
+
+export interface Coordinates {
+  latitud: number;
+  longitud: number;
+}
+
+export type PetStatus = "ACTIVO" | "REPORTADO_PERDIDO" | "EN_REFUGIO";
+
+export interface PetApiResponse {
+  id: number;
+  nombre: string;
+  tipo: string;
+  raza: string;
+  tamano: string;
+  estado: PetStatus;
+  descripcion: string;
+  imagenUrl: string;
+  createdAt: string;
+}
+
+export interface PetCreateRequest {
+  nombre: string;
+  tipo: string;
+  raza: string;
+  tamano: string;
+  estado: PetStatus;
+  descripcion: string;
+  imagenUrl?: string;
+}
+
 export interface Coincidencia {
   id: number;
   porcentaje: number;

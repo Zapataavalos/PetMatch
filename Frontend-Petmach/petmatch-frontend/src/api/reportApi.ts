@@ -11,4 +11,8 @@ export const reportApi = {
     const { data } = await api.post<ReportApiResponse>("/api/report", payload);
     return data;
   },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/api/report/${id}`);
+  },
 };

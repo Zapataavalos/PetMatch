@@ -5,9 +5,12 @@ import com.petmatch.msreport.dto.ReportResponse;
 import com.petmatch.msreport.messaging.EventPublisher;
 import com.petmatch.msreport.model.Report;
 import com.petmatch.msreport.repository.ReportRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ReportService {
@@ -50,6 +53,15 @@ public class ReportService {
         ReportResponse response = toResponse(saved);
         eventPublisher.publish("CREATED", "REPORT", response);
         return response;
+    }
+
+    public void eliminarReporte(Long id) {
+        if (!reportRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado");
+        }
+
+        reportRepository.deleteById(id);
+        eventPublisher.publish("DELETED", "REPORT", Map.of("id", id));
     }
 
     private ReportResponse toResponse(Report report) {

@@ -1,9 +1,11 @@
-import { Clock, MapPin } from "lucide-react";
+import { CircleCheck, Clock, MapPin } from "lucide-react";
 import type { ReporteResumen } from "../../types";
 import { StatusBadge } from "./StatusBadge";
 
 interface ReportCardProps {
   reporte: ReporteResumen;
+  onRescued?: (reporte: ReporteResumen) => void;
+  rescuing?: boolean;
 }
 
 const borderByStatus = {
@@ -12,7 +14,7 @@ const borderByStatus = {
   EN_PELIGRO: "border-[#ef4444]/30 bg-[#ef4444]/10",
 };
 
-export function ReportCard({ reporte }: ReportCardProps) {
+export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardProps) {
   return (
     <article
       className={`rounded-2xl border p-3 transition hover:scale-[1.01] ${borderByStatus[reporte.estado]}`}
@@ -27,7 +29,21 @@ export function ReportCard({ reporte }: ReportCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <h3 className="truncate text-xl font-black">{reporte.nombre}</h3>
-            <StatusBadge status={reporte.estado} />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <StatusBadge status={reporte.estado} />
+
+              {onRescued && (
+                <button
+                  type="button"
+                  onClick={() => onRescued(reporte)}
+                  disabled={rescuing}
+                  className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#10b981] px-3 text-xs font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <CircleCheck size={15} />
+                  {rescuing ? "Marcando..." : "Rescatado"}
+                </button>
+              )}
+            </div>
           </div>
 
           <p className="mt-2 line-clamp-1 text-sm text-[#b8b8c3]">

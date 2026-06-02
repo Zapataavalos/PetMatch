@@ -1,10 +1,13 @@
 import L from "leaflet";
+import { CircleCheck } from "lucide-react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import type { ReporteResumen, ReportStatus } from "../../types";
 import { StatusBadge } from "../reports/StatusBadge";
 
 interface InteractiveMapProps {
   reportes: ReporteResumen[];
+  onRescued?: (reporte: ReporteResumen) => void;
+  rescuingIds?: ReadonlySet<number>;
 }
 
 const markerColors: Record<ReportStatus, string> = {
@@ -42,7 +45,11 @@ function createCustomIcon(status: ReportStatus) {
   });
 }
 
-export function InteractiveMap({ reportes }: InteractiveMapProps) {
+export function InteractiveMap({
+  reportes,
+  onRescued,
+  rescuingIds = new Set<number>(),
+}: InteractiveMapProps) {
   const initialPosition: [number, number] = [-33.4489, -70.6693];
 
   return (
@@ -86,6 +93,18 @@ export function InteractiveMap({ reportes }: InteractiveMapProps) {
               </p>
 
               <p className="mt-1 text-xs text-[#8f8f9a]">{reporte.tiempo}</p>
+
+              {onRescued && (
+                <button
+                  type="button"
+                  onClick={() => onRescued(reporte)}
+                  disabled={rescuingIds.has(reporte.id)}
+                  className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#10b981] px-3 text-sm font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <CircleCheck size={16} />
+                  {rescuingIds.has(reporte.id) ? "Marcando..." : "Rescatado"}
+                </button>
+              )}
             </div>
           </Popup>
         </Marker>
