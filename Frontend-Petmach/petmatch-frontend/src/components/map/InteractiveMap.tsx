@@ -1,13 +1,16 @@
 import L from "leaflet";
 import { CircleCheck } from "lucide-react";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import type { ReporteResumen, ReportStatus } from "../../types";
+import { useMapEvents } from "react-leaflet";
+import type { Coordinates, ReporteResumen, ReportStatus } from "../../types";
 import { StatusBadge } from "../reports/StatusBadge";
 
 interface InteractiveMapProps {
   reportes: ReporteResumen[];
   onRescued?: (reporte: ReporteResumen) => void;
   rescuingIds?: ReadonlySet<number>;
+  selectedLocation?: Coordinates | null;
+  onLocationClick?: (coordinates: Coordinates) => void;
 }
 
 const markerColors: Record<ReportStatus, string> = {
@@ -49,6 +52,8 @@ export function InteractiveMap({
   reportes,
   onRescued,
   rescuingIds = new Set<number>(),
+  selectedLocation,
+  onLocationClick,
 }: InteractiveMapProps) {
   const initialPosition: [number, number] = [-33.4489, -70.6693];
 
@@ -63,6 +68,24 @@ export function InteractiveMap({
         attribution='&copy; OpenStreetMap contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+
+      <LocationClickHandler onLocationClick={onLocationClick} />
+
+      {selectedLocation && (
+        <Marker
+          position={[selectedLocation.latitud, selectedLocation.longitud]}
+          icon={createSelectedLocationIcon()}
+        >
+          <Popup>
+            <div className="w-[210px]">
+              <p className="font-black text-white">Nueva ubicacion</p>
+              <p className="mt-2 text-xs font-bold text-[#f5c400]">
+                {selectedLocation.latitud.toFixed(6)}, {selectedLocation.longitud.toFixed(6)}
+              </p>
+            </div>
+          </Popup>
+        </Marker>
+      )}
 
       {reportes.map((reporte) => (
         <Marker
@@ -111,4 +134,48 @@ export function InteractiveMap({
       ))}
     </MapContainer>
   );
+}
+
+function LocationClickHandler({
+  onLocationClick,
+}: {
+  onLocationClick?: (coordinates: Coordinates) => void;
+}) {
+  useMapEvents({
+    click(event) {
+      onLocationClick?.({
+        latitud: Number(event.latlng.lat.toFixed(6)),
+        longitud: Number(event.latlng.lng.toFixed(6)),
+      });
+    },
+  });
+
+  return null;
+}
+
+function createSelectedLocationIcon() {
+  return L.divIcon({
+    className: "custom-selected-location-marker",
+    html: `
+      <div style="
+        width: 38px;
+        height: 38px;
+        border-radius: 999px;
+        background: #f5c400;
+        border: 4px solid rgba(0,0,0,0.8);
+        box-shadow: 0 0 24px rgba(245,196,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #000;
+        font-size: 18px;
+        font-weight: 900;
+      ">
+        +
+      </div>
+    `,
+    iconSize: [38, 38],
+    iconAnchor: [19, 19],
+    popupAnchor: [0, -20],
+  });
 }

@@ -1,22 +1,10 @@
 import { isAxiosError } from "axios";
 import { ImagePlus, LocateFixed, MapPin, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { catalogosApi } from "../../api/catalogosApi";
 import { reportApi } from "../../api/reportApi";
-import {
-  fallbackRegiones,
-  formatLocationName,
-  getCoordinatesForLocation,
-  getFallbackCiudadesPorRegion,
-} from "../../data/chileLocations";
-import type {
-  CiudadCatalogo,
-  Coordinates,
-  RegionCatalogo,
-  ReportApiResponse,
-  ReportStatus,
-} from "../../types";
+import type { Coordinates, ReportApiResponse, ReportStatus } from "../../types";
+import { buildCoordinateLocationLabel, parseClickedCoordinates } from "../../utils/reportLocation";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 
@@ -24,108 +12,37 @@ const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 
 interface NewReportModalProps {
   open: boolean;
+  selectedLocation?: Coordinates | null;
   onClose: () => void;
   onCreated?: (report: ReportApiResponse) => void;
 }
 
-export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps) {
+export function NewReportModal({
+  open,
+  selectedLocation,
+  onClose,
+  onCreated,
+}: NewReportModalProps) {
   const [estado, setEstado] = useState<ReportStatus>("PERDIDO");
   const [nombre, setNombre] = useState("");
   const [ubicacion, setUbicacion] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [imagenData, setImagenData] = useState("");
   const [imagenNombre, setImagenNombre] = useState("");
-  const [regiones, setRegiones] = useState<RegionCatalogo[]>([]);
-  const [ciudades, setCiudades] = useState<CiudadCatalogo[]>([]);
-  const [selectedRegionId, setSelectedRegionId] = useState("");
-  const [selectedCiudadId, setSelectedCiudadId] = useState("");
-  const [currentCoordinates, setCurrentCoordinates] = useState<Coordinates | null>(null);
-  const [loadingRegions, setLoadingRegions] = useState(false);
-  const [loadingCities, setLoadingCities] = useState(false);
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const selectedRegion = useMemo(
-    () => regiones.find((region) => String(region.idRegion) === selectedRegionId),
-    [regiones, selectedRegionId]
-  );
-
-  const selectedCiudad = useMemo(
-    () => ciudades.find((ciudad) => String(ciudad.idCiudad) === selectedCiudadId),
-    [ciudades, selectedCiudadId]
-  );
-
   useEffect(() => {
-    if (!open) {
+    if (!open || !selectedLocation) {
       return;
     }
 
-    let active = true;
-
-    async function loadRegiones() {
-      setLoadingRegions(true);
-
-      try {
-        const data = await catalogosApi.getRegiones();
-
-        if (active) {
-          setRegiones(data.length > 0 ? data : fallbackRegiones);
-        }
-      } catch {
-        if (active) {
-          setRegiones(fallbackRegiones);
-        }
-      } finally {
-        if (active) {
-          setLoadingRegions(false);
-        }
-      }
-    }
-
-    void loadRegiones();
-
-    return () => {
-      active = false;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !selectedRegion) {
-      setCiudades([]);
-      return;
-    }
-
-    let active = true;
-    const region = selectedRegion;
-
-    async function loadCiudades() {
-      setLoadingCities(true);
-
-      try {
-        const data = await catalogosApi.getCiudadesPorRegion(region.idRegion);
-        const fallbackCities = getFallbackCiudadesPorRegion(region);
-
-        if (active) {
-          setCiudades(data.length > 0 ? data : fallbackCities);
-        }
-      } catch {
-        if (active) {
-          setCiudades(getFallbackCiudadesPorRegion(region));
-        }
-      } finally {
-        if (active) {
-          setLoadingCities(false);
-        }
-      }
-    }
-
-    void loadCiudades();
-
-    return () => {
-      active = false;
-    };
-  }, [open, selectedRegion]);
+    setCoordinates(selectedLocation);
+    setUbicacion(buildCoordinateLocationLabel(selectedLocation));
+    setError("");
+  }, [open, selectedLocation]);
 
   if (!open) {
     return null;
@@ -137,29 +54,13 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
     setError("");
 
     try {
-      const coordinates =
-        currentCoordinates ??
-        (selectedRegion && selectedCiudad
-          ? getCoordinatesForLocation(
-              selectedCiudad.nombreCiudad,
-              selectedRegion.nombreRegion
-            )
-          : undefined);
-
       if (!coordinates) {
-        throw new Error("Selecciona region y ciudad, o usa tu ubicacion actual.");
+        throw new Error("Haz clic en el mapa o usa tu ubicacion actual para publicar el reporte.");
       }
-
-      const finalLocation = buildLocationLabel({
-        reference: ubicacion,
-        region: selectedRegion,
-        ciudad: selectedCiudad,
-        usingCurrentLocation: Boolean(currentCoordinates),
-      });
 
       const report = await reportApi.create({
         nombre: nombre.trim() || "Mascota sin nombre",
-        ubicacion: finalLocation,
+        ubicacion: buildCoordinateLocationLabel(coordinates, ubicacion),
         descripcion: descripcion.trim(),
         estado,
         imagenUrl: imagenData || undefined,
@@ -189,14 +90,13 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const latitud = Number(position.coords.latitude.toFixed(6));
-        const longitud = Number(position.coords.longitude.toFixed(6));
+        const nextCoordinates = parseClickedCoordinates(
+          position.coords.latitude,
+          position.coords.longitude
+        );
 
-        setCurrentCoordinates({ latitud, longitud });
-        setUbicacion(`Mi ubicacion actual (${latitud}, ${longitud})`);
-        setSelectedRegionId("");
-        setSelectedCiudadId("");
-        setCiudades([]);
+        setCoordinates(nextCoordinates);
+        setUbicacion(buildCoordinateLocationLabel(nextCoordinates, "Mi ubicacion actual"));
         setLocating(false);
       },
       (error) => {
@@ -248,18 +148,6 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
     reader.readAsDataURL(file);
   };
 
-  const handleRegionChange = (value: string) => {
-    setSelectedRegionId(value);
-    setSelectedCiudadId("");
-    setCurrentCoordinates(null);
-    setCiudades([]);
-  };
-
-  const handleCiudadChange = (value: string) => {
-    setSelectedCiudadId(value);
-    setCurrentCoordinates(null);
-  };
-
   const handleRemoveImage = () => {
     setImagenData("");
     setImagenNombre("");
@@ -271,11 +159,14 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
     setDescripcion("");
     setImagenData("");
     setImagenNombre("");
-    setSelectedRegionId("");
-    setSelectedCiudadId("");
-    setCurrentCoordinates(null);
-    setCiudades([]);
+    setCoordinates(null);
     setEstado("PERDIDO");
+    setError("");
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
   };
 
   const types: { value: ReportStatus; label: string; color: string }[] = [
@@ -307,7 +198,7 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f0f12] text-[#9d9daa] hover:text-white"
           >
             <X size={22} />
@@ -320,6 +211,10 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
               {error}
             </div>
           )}
+
+          <div className="rounded-xl border border-[#f5c400]/25 bg-[#f5c400]/10 p-4 text-sm font-bold text-[#f5c400]">
+            La ubicacion del reporte se define con un clic en el mapa o con tu ubicacion actual.
+          </div>
 
           <div>
             <span className="mb-3 block font-bold text-[#a8a8b3]">
@@ -418,12 +313,9 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
                 <MapPin size={20} className="shrink-0 text-[#81818b]" />
                 <input
                   value={ubicacion}
-                  onChange={(event) => {
-                    setUbicacion(event.target.value);
-                    setCurrentCoordinates(null);
-                  }}
+                  onChange={(event) => setUbicacion(event.target.value)}
                   maxLength={180}
-                  placeholder="Sector o punto de referencia"
+                  placeholder="Haz clic en el mapa para seleccionar la ubicacion"
                   className="min-w-0 flex-1 bg-transparent text-white outline-none placeholder:text-[#6f6f79]"
                 />
               </div>
@@ -437,50 +329,16 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
                 {locating ? "Ubicando..." : "Usar mi ubicacion"}
               </button>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-                Region
-              </span>
-              <select
-                value={selectedRegionId}
-                onChange={(event) => handleRegionChange(event.target.value)}
-                disabled={loadingRegions || saving}
-                className="h-14 w-full rounded-xl border border-[#2b2b31] bg-[#09090b] px-4 text-white outline-none focus:border-[#f5c400] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">
-                  {loadingRegions ? "Cargando regiones..." : "Selecciona una region"}
-                </option>
-                {regiones.map((region) => (
-                  <option key={region.idRegion} value={region.idRegion}>
-                    {formatLocationName(region.nombreRegion)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-                Ciudad
-              </span>
-              <select
-                value={selectedCiudadId}
-                onChange={(event) => handleCiudadChange(event.target.value)}
-                disabled={!selectedRegion || loadingCities || saving}
-                className="h-14 w-full rounded-xl border border-[#2b2b31] bg-[#09090b] px-4 text-white outline-none focus:border-[#f5c400] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <option value="">
-                  {loadingCities ? "Cargando ciudades..." : "Selecciona una ciudad"}
-                </option>
-                {ciudades.map((ciudad) => (
-                  <option key={ciudad.idCiudad} value={ciudad.idCiudad}>
-                    {formatLocationName(ciudad.nombreCiudad)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {coordinates ? (
+              <p className="mt-3 text-sm font-bold text-[#10b981]">
+                Coordenadas listas: {coordinates.latitud.toFixed(6)}, {coordinates.longitud.toFixed(6)}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm font-semibold text-[#85858f]">
+                Falta seleccionar un punto del mapa.
+              </p>
+            )}
           </div>
 
           <label className="block">
@@ -501,7 +359,7 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
         </div>
 
         <div className="flex items-center justify-end gap-4 border-t border-[#24242a] px-7 py-5">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+          <Button type="button" variant="ghost" onClick={handleClose} disabled={saving}>
             Cancelar
           </Button>
           <Button type="submit" disabled={saving}>
@@ -516,36 +374,6 @@ export function NewReportModal({ open, onClose, onCreated }: NewReportModalProps
 interface ApiErrorResponse {
   message?: string;
   errors?: Record<string, string>;
-}
-
-function buildLocationLabel({
-  reference,
-  region,
-  ciudad,
-  usingCurrentLocation,
-}: {
-  reference: string;
-  region?: RegionCatalogo;
-  ciudad?: CiudadCatalogo;
-  usingCurrentLocation: boolean;
-}) {
-  const cleanReference = reference.trim();
-
-  if (usingCurrentLocation) {
-    return cleanReference || "Mi ubicacion actual";
-  }
-
-  if (!region || !ciudad) {
-    throw new Error("Selecciona region y ciudad para publicar el reporte.");
-  }
-
-  return [
-    cleanReference,
-    formatLocationName(ciudad.nombreCiudad),
-    formatLocationName(region.nombreRegion),
-  ]
-    .filter(Boolean)
-    .join(", ");
 }
 
 function getReportErrorMessage(error: unknown) {
@@ -570,7 +398,7 @@ function getReportErrorMessage(error: unknown) {
 
 function getGeolocationErrorMessage(error: GeolocationPositionError) {
   if (error.code === error.PERMISSION_DENIED) {
-    return "Permiso de ubicacion denegado. Puedes elegir region y ciudad manualmente.";
+    return "Permiso de ubicacion denegado. Haz clic en el mapa para seleccionar el punto.";
   }
 
   if (error.code === error.POSITION_UNAVAILABLE) {

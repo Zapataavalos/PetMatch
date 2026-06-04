@@ -1,16 +1,17 @@
-import { Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { reportApi } from "../api/reportApi";
 import { InteractiveMap } from "../components/map/InteractiveMap";
 import { NewReportModal } from "../components/reports/NewReportModal";
 import { ReportCard } from "../components/reports/ReportCard";
 import { StatusDot } from "../components/reports/StatusBadge";
-import type { ReportApiResponse, ReportStatus, ReporteResumen } from "../types";
+import type { Coordinates, ReportApiResponse, ReportStatus, ReporteResumen } from "../types";
 import { mapReport } from "../utils/reportMapper";
 
 export function MapPage() {
   const [filter, setFilter] = useState<ReportStatus | "TODOS">("TODOS");
   const [modalOpen, setModalOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<Coordinates | null>(null);
   const [search, setSearch] = useState("");
   const [reportes, setReportes] = useState<ReporteResumen[]>([]);
   const [rescuingIds, setRescuingIds] = useState<Set<number>>(new Set());
@@ -65,6 +66,12 @@ export function MapPage() {
 
   const handleCreated = (report: ReportApiResponse) => {
     setReportes((current) => [mapReport(report), ...current]);
+    setSelectedLocation(null);
+  };
+
+  const handleLocationClick = (coordinates: Coordinates) => {
+    setSelectedLocation(coordinates);
+    setModalOpen(true);
   };
 
   const handleRescued = async (reporte: ReporteResumen) => {
@@ -95,7 +102,14 @@ export function MapPage() {
           reportes={reportesFiltrados}
           onRescued={handleRescued}
           rescuingIds={rescuingIds}
+          selectedLocation={selectedLocation}
+          onLocationClick={handleLocationClick}
         />
+
+        <div className="absolute left-5 top-5 z-[500] flex max-w-sm items-center gap-3 rounded-2xl border border-[#f5c400]/30 bg-[#17171b]/95 p-4 text-sm font-bold text-white backdrop-blur">
+          <MapPin size={20} className="shrink-0 text-[#f5c400]" />
+          Haz clic en una ubicacion del mapa para crear un reporte ahi.
+        </div>
 
         <div className="absolute bottom-5 left-5 z-[500] rounded-2xl border border-[#2c2c32] bg-[#1b1b20]/95 p-4 backdrop-blur">
           <h3 className="mb-3 text-sm font-black text-[#a8a8b3]">ESTADO</h3>
@@ -215,12 +229,16 @@ export function MapPage() {
 
       <NewReportModal
         open={modalOpen}
+        selectedLocation={selectedLocation}
         onClose={() => setModalOpen(false)}
         onCreated={handleCreated}
       />
 
       <button
-        onClick={() => setModalOpen(true)}
+        onClick={() => {
+          setSelectedLocation(null);
+          setModalOpen(true);
+        }}
         className="fixed bottom-8 right-[30rem] z-[600] rounded-xl bg-[#f5c400] px-6 py-4 font-black text-black shadow-[0_0_24px_rgba(245,196,0,0.25)] transition hover:bg-[#ffd21a]"
       >
         Nuevo Reporte

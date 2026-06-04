@@ -91,6 +91,12 @@ export interface CiudadCatalogo {
   idRegion: number;
 }
 
+export interface ColorCatalogo {
+  idColor: number;
+  nombreColor: string;
+  codigoHexadecimal: string;
+}
+
 export interface Coordinates {
   latitud: number;
   longitud: number;
@@ -118,6 +124,25 @@ export interface PetCreateRequest {
   estado: PetStatus;
   descripcion: string;
   imagenUrl?: string;
+}
+
+export type AppLanguage = "ES" | "EN";
+
+export interface ConfiguracionUsuarioResponse {
+  idConfiguracionUsuario: number;
+  idUsuario: number;
+  idColor: number;
+  notificacionesActivas: boolean;
+  modoOscuro: boolean;
+  idioma: AppLanguage;
+}
+
+export interface ConfiguracionUsuarioRequest {
+  idUsuario: number;
+  idColor: number;
+  notificacionesActivas: boolean;
+  modoOscuro: boolean;
+  idioma: AppLanguage;
 }
 
 export interface Coincidencia {

@@ -1,6 +1,7 @@
 import { isAxiosError } from "axios";
 import {
   AlertTriangle,
+  Clock,
   Edit3,
   Eye,
   ImagePlus,
@@ -9,10 +10,12 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  Wifi,
+  WifiOff,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent, ReactNode, SyntheticEvent } from "react";
 import { petApi } from "../api/petApi";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
@@ -20,8 +23,17 @@ import { Input } from "../components/ui/Input";
 import type { PetApiResponse, PetCreateRequest, PetStatus } from "../types";
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
+const LIVE_REFRESH_INTERVAL_MS = 10000;
+const DEFAULT_PET_IMAGE =
+  "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=600&auto=format&fit=crop";
 
 type PetFilter = "TODOS" | PetStatus;
+type ConnectionStatus = "online" | "offline";
+
+interface LoadPetsOptions {
+  showLoading?: boolean;
+  showRefreshing?: boolean;
+}
 
 const statusLabels: Record<PetStatus, string> = {
   ACTIVO: "Activo",
@@ -44,25 +56,81 @@ export function PetsPage() {
   const [detailsPet, setDetailsPet] = useState<PetApiResponse | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("online");
   const [error, setError] = useState("");
+  const requestInFlightRef = useRef(false);
+  const hasLoadedOnceRef = useRef(false);
 
-  const loadPets = useCallback(async () => {
-    setLoading(true);
+  const loadPets = useCallback(async (options: LoadPetsOptions = {}) => {
+    if (requestInFlightRef.current) {
+      return;
+    }
+
+    const { showLoading = false, showRefreshing = false } = options;
+
+    requestInFlightRef.current = true;
+
+    if (showLoading) {
+      setLoading(true);
+    }
+
+    if (showRefreshing) {
+      setRefreshing(true);
+    }
+
     setError("");
 
     try {
       const data = await petApi.getAll();
       setPets(data);
+      setDetailsPet((current) => syncSelectedPet(current, data));
+      setConnectionStatus("online");
+      setLastUpdated(new Date());
+      hasLoadedOnceRef.current = true;
     } catch {
-      setError("No fue posible cargar las mascotas registradas.");
+      setConnectionStatus("offline");
+      setError(
+        hasLoadedOnceRef.current
+          ? "No fue posible sincronizar con el servicio. Se conserva la ultima lista cargada."
+          : "No fue posible cargar las mascotas registradas."
+      );
     } finally {
-      setLoading(false);
+      requestInFlightRef.current = false;
+
+      if (showLoading) {
+        setLoading(false);
+      }
+
+      if (showRefreshing) {
+        setRefreshing(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    void loadPets();
+    void loadPets({ showLoading: true });
   }, [loadPets]);
+
+  useEffect(() => {
+    if (!liveEnabled) {
+      return;
+    }
+
+    if (hasLoadedOnceRef.current) {
+      void loadPets({ showRefreshing: true });
+    }
+
+    const refreshTimer = window.setInterval(() => {
+      void loadPets({ showRefreshing: true });
+    }, LIVE_REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(refreshTimer);
+  }, [liveEnabled, loadPets]);
+
+  const lastUpdatedLabel = useMemo(() => formatSyncTime(lastUpdated), [lastUpdated]);
 
   const filteredPets = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -100,6 +168,11 @@ export function PetsPage() {
 
       return [pet, ...current];
     });
+    setDetailsPet((current) => (current?.id === pet.id ? pet : current));
+    setConnectionStatus("online");
+    setLastUpdated(new Date());
+    hasLoadedOnceRef.current = true;
+    void loadPets({ showRefreshing: true });
   };
 
   const handleDelete = async (pet: PetApiResponse) => {
@@ -116,6 +189,8 @@ export function PetsPage() {
       await petApi.delete(pet.id);
       setPets((current) => current.filter((item) => item.id !== pet.id));
       setDetailsPet((current) => (current?.id === pet.id ? null : current));
+      setConnectionStatus("online");
+      setLastUpdated(new Date());
     } catch {
       setError("No fue posible eliminar la mascota.");
     } finally {
@@ -145,12 +220,49 @@ export function PetsPage() {
           <p className="mt-4 text-lg text-[#aaaaba]">
             Administra mascotas registradas desde el servicio real de mascotas.
           </p>
+
+          <LiveSyncStatus
+            status={connectionStatus}
+            liveEnabled={liveEnabled}
+            refreshing={refreshing}
+            lastUpdatedLabel={lastUpdatedLabel}
+          />
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button type="button" variant="secondary" onClick={() => void loadPets()}>
-            <RefreshCw className="mr-2 inline" size={18} />
-            Actualizar
+          <label className="flex h-12 cursor-pointer items-center justify-between gap-3 rounded-xl border border-[#2a2a30] bg-[#17171b] px-4 text-sm font-black text-white">
+            <input
+              type="checkbox"
+              className="sr-only"
+              checked={liveEnabled}
+              onChange={(event) => setLiveEnabled(event.target.checked)}
+            />
+            <span className="flex items-center gap-2">
+              {liveEnabled ? <Wifi size={17} /> : <WifiOff size={17} />}
+              {liveEnabled ? "En vivo" : "Pausado"}
+            </span>
+            <span
+              aria-hidden="true"
+              className={`relative h-6 w-11 rounded-full transition ${
+                liveEnabled ? "bg-[#10b981]" : "bg-[#3a3a42]"
+              }`}
+            >
+              <span
+                className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${
+                  liveEnabled ? "left-6" : "left-1"
+                }`}
+              />
+            </span>
+          </label>
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void loadPets({ showRefreshing: true })}
+            disabled={loading || refreshing}
+          >
+            <RefreshCw className={`mr-2 inline ${refreshing ? "animate-spin" : ""}`} size={18} />
+            {refreshing ? "Actualizando" : "Actualizar"}
           </Button>
           <Button type="button" onClick={openCreateModal}>
             <Plus className="mr-2 inline" size={19} />
@@ -192,6 +304,12 @@ export function PetsPage() {
         </div>
       </div>
 
+      {!loading && (
+        <p className="mt-4 text-sm font-semibold text-[#85858f]">
+          Mostrando {filteredPets.length} de {pets.length} mascotas registradas.
+        </p>
+      )}
+
       {error && (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
           <AlertTriangle size={18} />
@@ -209,7 +327,7 @@ export function PetsPage() {
         <div className="mt-8 rounded-2xl border border-[#24242a] bg-[#17171b] p-8">
           <h2 className="text-2xl font-black">No hay mascotas para mostrar</h2>
           <p className="mt-3 text-[#aaaaba]">
-            Crea una mascota nueva o ajusta los filtros de busqueda.
+            Todavia no hay mascotas en el servicio real o los filtros no tienen coincidencias.
           </p>
         </div>
       )}
@@ -268,7 +386,12 @@ function PetCard({
 }) {
   return (
     <Card className="overflow-hidden">
-      <img src={pet.imagenUrl} alt={pet.nombre} className="h-56 w-full object-cover" />
+      <img
+        src={getPetImageUrl(pet.imagenUrl)}
+        alt={pet.nombre}
+        className="h-56 w-full object-cover"
+        onError={handlePetImageError}
+      />
 
       <div className="p-6">
         <div className="flex items-start justify-between gap-4">
@@ -290,6 +413,11 @@ function PetCard({
             {statusLabels[pet.estado]}
           </p>
         </div>
+
+        <p className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#85858f]">
+          <Clock size={14} />
+          Registrada {formatPetDate(pet.createdAt)}
+        </p>
 
         <div className="mt-5 grid grid-cols-3 gap-2">
           <button
@@ -491,9 +619,10 @@ function PetFormModal({
 
             <div className="grid gap-3 rounded-xl border border-[#2b2b31] bg-[#09090b] p-3 sm:grid-cols-[140px_1fr]">
               <img
-                src={imagenData || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=600&auto=format&fit=crop"}
+                src={imagenData || DEFAULT_PET_IMAGE}
                 alt="Vista previa"
                 className="h-28 w-full rounded-lg object-cover sm:w-36"
+                onError={handlePetImageError}
               />
 
               <div className="flex min-w-0 flex-col justify-between gap-3">
@@ -574,7 +703,12 @@ function PetDetailsModal({
         </div>
 
         <div className="max-h-[65vh] overflow-y-auto">
-          <img src={pet.imagenUrl} alt={pet.nombre} className="h-72 w-full object-cover" />
+          <img
+            src={getPetImageUrl(pet.imagenUrl)}
+            alt={pet.nombre}
+            className="h-72 w-full object-cover"
+            onError={handlePetImageError}
+          />
 
           <div className="p-7">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
@@ -582,6 +716,10 @@ function PetDetailsModal({
                 <h3 className="text-3xl font-black">{pet.nombre}</h3>
                 <p className="mt-2 text-[#aaaaba]">
                   {pet.tipo} - {pet.raza} - {pet.tamano}
+                </p>
+                <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#85858f]">
+                  <Clock size={15} />
+                  Registrada {formatPetDate(pet.createdAt)}
                 </p>
               </div>
 
@@ -650,7 +788,7 @@ function FilterButton({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -665,6 +803,81 @@ function FilterButton({
       {children}
     </button>
   );
+}
+
+function LiveSyncStatus({
+  status,
+  liveEnabled,
+  refreshing,
+  lastUpdatedLabel,
+}: {
+  status: ConnectionStatus;
+  liveEnabled: boolean;
+  refreshing: boolean;
+  lastUpdatedLabel: string;
+}) {
+  const online = status === "online";
+
+  return (
+    <div
+      aria-live="polite"
+      className={`mt-5 flex w-fit flex-wrap items-center gap-3 rounded-xl border px-4 py-2 text-sm font-bold ${
+        online
+          ? "border-[#10b981]/30 bg-[#10b981]/10 text-[#9ee7c7]"
+          : "border-red-500/30 bg-red-500/10 text-red-300"
+      }`}
+    >
+      {online ? <Wifi size={17} /> : <WifiOff size={17} />}
+      <span>{online ? (liveEnabled ? "Datos en vivo" : "Datos cargados") : "Sin conexion"}</span>
+      {refreshing && <span className="text-[#f5c400]">Sincronizando...</span>}
+      {lastUpdatedLabel && <span className="text-[#aaaaba]">Ultima actualizacion {lastUpdatedLabel}</span>}
+    </div>
+  );
+}
+
+function syncSelectedPet(current: PetApiResponse | null, pets: PetApiResponse[]) {
+  if (!current) {
+    return null;
+  }
+
+  return pets.find((pet) => pet.id === current.id) ?? null;
+}
+
+function getPetImageUrl(imageUrl?: string) {
+  return imageUrl?.trim() || DEFAULT_PET_IMAGE;
+}
+
+function handlePetImageError(event: SyntheticEvent<HTMLImageElement>) {
+  event.currentTarget.onerror = null;
+  event.currentTarget.src = DEFAULT_PET_IMAGE;
+}
+
+function formatSyncTime(date: Date | null) {
+  if (!date) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("es-CL", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+}
+
+function formatPetDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "sin fecha disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-CL", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 interface ApiErrorResponse {

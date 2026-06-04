@@ -11,53 +11,55 @@ import {
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
+import { useI18n } from "../../i18n/useI18n";
 
 const baseNavItems = [
   {
-    label: "Dashboard",
+    labelKey: "nav.dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    label: "Mapa",
+    labelKey: "nav.map",
     path: "/mapa",
     icon: Map,
   },
   {
-    label: "Coincidencias",
+    labelKey: "nav.matches",
     path: "/coincidencias",
     icon: Search,
   },
   {
-    label: "Mascotas",
+    labelKey: "nav.pets",
     path: "/mascotas",
     icon: PawPrint,
   },
   {
-    label: "Reportes",
+    labelKey: "nav.reports",
     path: "/reportes",
     icon: Shield,
   },
   {
-    label: "Perfil",
+    labelKey: "nav.profile",
     path: "/perfil",
     icon: User,
   },
   {
-    label: "Config.",
+    labelKey: "nav.settings",
     path: "/configuracion",
     icon: Settings,
   },
-];
+] as const;
 
 const adminNavItem = {
-  label: "Admin",
+  labelKey: "nav.admin",
   path: "/admin",
   icon: Shield,
-};
+} as const;
 
 export function Navbar() {
   const { isAuthenticated, logout, isAdmin } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
 
   const visibleItems = isAdmin
@@ -96,7 +98,7 @@ export function Navbar() {
                 }
               >
                 <Icon size={17} />
-                {item.label}
+                {t(item.labelKey)}
               </NavLink>
             );
           })}
@@ -108,14 +110,14 @@ export function Navbar() {
               onClick={logout}
               className="text-sm font-bold text-[#a7a7b2] hover:text-white"
             >
-              Salir
+              {t("nav.logout")}
             </button>
           ) : (
             <button
               onClick={() => navigate("/login")}
               className="text-sm font-bold text-[#d8d8e2] hover:text-white"
             >
-              Entrar
+              {t("nav.login")}
             </button>
           )}
 
@@ -126,7 +128,7 @@ export function Navbar() {
             className="flex h-11 items-center gap-2 rounded-xl bg-[#f5c400] px-5 font-black text-black transition hover:bg-[#ffd21a]"
           >
             <Plus size={19} />
-            Nuevo Reporte
+            {t("nav.newReport")}
           </button>
         </div>
       </div>
