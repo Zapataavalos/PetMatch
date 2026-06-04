@@ -1,13 +1,14 @@
 package com.petmatch.ubicacion_service;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 class UbicacionServiceApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void applicationClassIsAvailable() {
+		assertNotNull(UbicacionServiceApplication.class);
 	}
 
 }

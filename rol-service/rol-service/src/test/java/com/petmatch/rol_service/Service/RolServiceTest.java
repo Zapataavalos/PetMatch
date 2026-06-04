@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.petmatch.rol_service.DTO.RolRequestDTO;
 import com.petmatch.rol_service.DTO.RolResponseDTO;
+import com.petmatch.rol_service.Event.RolEventPublisher;
 import com.petmatch.rol_service.Exception.BadRequestException;
 import com.petmatch.rol_service.Exception.ResourceNotFoundException;
 import com.petmatch.rol_service.Model.Rol;
@@ -26,6 +27,9 @@ class RolServiceTest {
 
     @Mock
     private RolRepository rolRepository;
+
+    @Mock
+    private RolEventPublisher rolEventPublisher;
 
     @InjectMocks
     private RolService rolService;
@@ -94,6 +98,7 @@ class RolServiceTest {
 
         verify(rolRepository, times(1)).existsByNombreRolIgnoreCase("ADMINISTRADOR");
         verify(rolRepository, times(1)).save(any(Rol.class));
+        verify(rolEventPublisher, times(1)).publicarRolCreado(any(Rol.class));
     }
 
     @Test
@@ -128,6 +133,7 @@ class RolServiceTest {
 
         verify(rolRepository, times(1)).findById(1);
         verify(rolRepository, times(1)).save(any(Rol.class));
+        verify(rolEventPublisher, times(1)).publicarRolActualizado(rolExistente);
     }
 
     @Test
@@ -157,5 +163,6 @@ class RolServiceTest {
 
         verify(rolRepository, times(1)).findById(1);
         verify(rolRepository, times(1)).delete(rol);
+        verify(rolEventPublisher, times(1)).publicarRolEliminado(rol);
     }
 }

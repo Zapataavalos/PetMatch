@@ -2,6 +2,7 @@ package com.petmatch.region_service.Service;
 
 import com.petmatch.region_service.DTO.RegionRequestDto;
 import com.petmatch.region_service.DTO.RegionResponseDto;
+import com.petmatch.region_service.Event.RegionEventPublisher;
 import com.petmatch.region_service.Exception.BadRequestException;
 import com.petmatch.region_service.Exception.ResourceNotFoundException;
 import com.petmatch.region_service.Model.Region;
@@ -29,6 +30,9 @@ class RegionServiceTest {
 
     @Mock
     private PaisReferenciaRepository paisReferenciaRepository;
+
+    @Mock
+    private RegionEventPublisher regionEventPublisher;
 
     @InjectMocks
     private RegionService regionService;
@@ -137,6 +141,7 @@ class RegionServiceTest {
         verify(paisReferenciaRepository, times(1)).existsByIdPaisAndActivoTrue(1);
         verify(regionRepository, times(1)).existsByNombreRegionIgnoreCaseAndIdPais("METROPOLITANA", 1);
         verify(regionRepository, times(1)).save(any(Region.class));
+        verify(regionEventPublisher, times(1)).publicarRegionCreada(any(Region.class));
     }
 
     @Test
@@ -187,6 +192,7 @@ class RegionServiceTest {
 
         verify(regionRepository, times(1)).findById(1);
         verify(regionRepository, times(1)).save(any(Region.class));
+        verify(regionEventPublisher, times(1)).publicarRegionActualizada(regionExistente);
     }
 
     @Test
@@ -217,5 +223,6 @@ class RegionServiceTest {
 
         verify(regionRepository, times(1)).findById(1);
         verify(regionRepository, times(1)).delete(region);
+        verify(regionEventPublisher, times(1)).publicarRegionEliminada(region);
     }
 }

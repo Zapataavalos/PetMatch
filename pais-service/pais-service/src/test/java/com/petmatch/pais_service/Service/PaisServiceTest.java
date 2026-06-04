@@ -2,6 +2,7 @@ package com.petmatch.pais_service.Service;
 
 import com.petmatch.pais_service.Dto.PaisRequestDTO;
 import com.petmatch.pais_service.Dto.PaisResponseDTO;
+import com.petmatch.pais_service.Event.PaisEventPublisher;
 import com.petmatch.pais_service.Exception.BadRequestException;
 import com.petmatch.pais_service.Exception.ResourceNotFoundException;
 import com.petmatch.pais_service.Model.Pais;
@@ -25,6 +26,9 @@ class PaisServiceTest {
 
     @Mock
     private PaisRepository paisRepository;
+
+    @Mock
+    private PaisEventPublisher paisEventPublisher;
 
     @InjectMocks
     private PaisService paisService;
@@ -93,6 +97,7 @@ class PaisServiceTest {
 
         verify(paisRepository, times(1)).existsByNombrePaisIgnoreCase("CHILE");
         verify(paisRepository, times(1)).save(any(Pais.class));
+        verify(paisEventPublisher, times(1)).publicarPaisCreado(any(Pais.class));
     }
 
     @Test
@@ -127,6 +132,7 @@ class PaisServiceTest {
 
         verify(paisRepository, times(1)).findById(1);
         verify(paisRepository, times(1)).save(any(Pais.class));
+        verify(paisEventPublisher, times(1)).publicarPaisActualizado(paisExistente);
     }
 
     @Test
@@ -156,5 +162,6 @@ class PaisServiceTest {
 
         verify(paisRepository, times(1)).findById(1);
         verify(paisRepository, times(1)).delete(pais);
+        verify(paisEventPublisher, times(1)).publicarPaisEliminado(pais);
     }
 }
