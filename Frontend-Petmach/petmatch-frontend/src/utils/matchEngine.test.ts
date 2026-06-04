@@ -22,6 +22,15 @@ describe("matchEngine", () => {
     });
     expect(matches[0].porcentaje).toBeGreaterThanOrEqual(75);
   });
+
+  it("does not use confirmed found reports as active sightings", () => {
+    const matches = buildReportMatches([
+      createReport(1, "PERDIDO", "Max", "Perro cafe con collar rojo", -33.4489, -70.6693),
+      createReport(2, "ENCONTRADO", "Max", "Mascota ya encontrada", -33.449, -70.669),
+    ]);
+
+    expect(matches).toHaveLength(0);
+  });
 });
 
 function createReport(

@@ -46,11 +46,11 @@ const stopWords = new Set([
 export function buildReportMatches(reports: ReportApiResponse[]) {
   const summaries = reports.map(mapReport);
   const perdidos = summaries.filter((report) => report.estado === "PERDIDO");
-  const encontrados = summaries.filter((report) => report.estado !== "PERDIDO");
+  const avistamientos = summaries.filter(isActionableSighting);
 
   return perdidos
     .flatMap((perdido) =>
-      encontrados.map((encontrado) => buildMatch(perdido, encontrado))
+      avistamientos.map((encontrado) => buildMatch(perdido, encontrado))
     )
     .filter((match) => match.porcentaje >= 25)
     .sort((a, b) => {
@@ -60,6 +60,10 @@ export function buildReportMatches(reports: ReportApiResponse[]) {
 
       return a.distanciaKm - b.distanciaKm;
     });
+}
+
+function isActionableSighting(report: ReporteResumen) {
+  return report.estado === "EN_REFUGIO" || report.estado === "EN_PELIGRO";
 }
 
 export function formatDistance(distanceKm: number) {
@@ -110,10 +114,10 @@ function buildMatch(perdido: ReporteResumen, encontrado: ReporteResumen): MatchC
 
   if (encontrado.estado === "EN_REFUGIO") {
     score += 10;
-    razones.push("El reporte encontrado esta en refugio o clinica");
+    razones.push("El avistamiento esta en refugio o clinica");
   } else if (encontrado.estado === "EN_PELIGRO") {
     score += 8;
-    razones.push("El reporte encontrado requiere atencion");
+    razones.push("El avistamiento requiere atencion");
   }
 
   const porcentaje = Math.max(25, Math.min(99, Math.round(score)));

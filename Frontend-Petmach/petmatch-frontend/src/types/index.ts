@@ -41,7 +41,7 @@ export interface PerfilResponse extends AuthResponse {
   fechaRegistro: string;
 }
 
-export type ReportStatus = "PERDIDO" | "EN_REFUGIO" | "EN_PELIGRO";
+export type ReportStatus = "PERDIDO" | "EN_REFUGIO" | "EN_PELIGRO" | "ENCONTRADO";
 
 export interface ReporteResumen {
   id: number;

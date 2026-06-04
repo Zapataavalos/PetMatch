@@ -4,6 +4,7 @@ import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
 import com.petmatch.msreport.messaging.EventPublisher;
 import com.petmatch.msreport.model.Report;
+import com.petmatch.msreport.model.ReportStatus;
 import com.petmatch.msreport.repository.ReportRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,24 @@ public class ReportService {
 
         reportRepository.deleteById(id);
         eventPublisher.publish("DELETED", "REPORT", Map.of("id", id));
+    }
+
+    public ReportResponse marcarComoEncontrado(Long id) {
+        Report report = findById(id);
+        report.setEstado(ReportStatus.ENCONTRADO);
+
+        Report saved = reportRepository.save(report);
+        ReportResponse response = toResponse(saved);
+        eventPublisher.publish("FOUND", "REPORT", response);
+        return response;
+    }
+
+    private Report findById(Long id) {
+        return reportRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Reporte no encontrado"
+                ));
     }
 
     private ReportResponse toResponse(Report report) {

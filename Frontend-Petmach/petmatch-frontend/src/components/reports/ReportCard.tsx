@@ -12,6 +12,7 @@ const borderByStatus = {
   PERDIDO: "border-[#f5c400]/30 bg-[#f5c400]/10",
   EN_REFUGIO: "border-[#10b981]/30 bg-[#10b981]/10",
   EN_PELIGRO: "border-[#ef4444]/30 bg-[#ef4444]/10",
+  ENCONTRADO: "border-[#60a5fa]/30 bg-[#60a5fa]/10",
 };
 
 export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardProps) {
@@ -32,7 +33,7 @@ export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardP
             <div className="flex shrink-0 flex-col items-end gap-2">
               <StatusBadge status={reporte.estado} />
 
-              {onRescued && (
+              {onRescued && reporte.estado !== "ENCONTRADO" && (
                 <button
                   type="button"
                   onClick={() => onRescued(reporte)}
@@ -40,7 +41,7 @@ export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardP
                   className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#10b981] px-3 text-xs font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <CircleCheck size={15} />
-                  {rescuing ? "Marcando..." : "Rescatado"}
+                  {rescuing ? "Marcando..." : "Encontrada"}
                 </button>
               )}
             </div>

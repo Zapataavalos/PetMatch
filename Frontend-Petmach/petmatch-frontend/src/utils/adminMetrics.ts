@@ -1,10 +1,11 @@
-import { AlertTriangle, CheckCircle, MapPin, Users } from "lucide-react";
+import { CheckCircle, MapPin, Users } from "lucide-react";
 import type { ReportApiResponse, ReportStatus, Usuario } from "../types";
 
 export function buildAdminStats(users: Usuario[], reports: ReportApiResponse[]) {
   const activeReports = reports.length;
   const refugeReports = countReportsByStatus(reports, "EN_REFUGIO");
   const criticalReports = countReportsByStatus(reports, "EN_PELIGRO");
+  const foundReports = countReportsByStatus(reports, "ENCONTRADO");
 
   return [
     {
@@ -22,18 +23,18 @@ export function buildAdminStats(users: Usuario[], reports: ReportApiResponse[]) 
       color: "text-[#a78bfa]",
     },
     {
-      label: "En Refugio",
-      value: String(refugeReports),
+      label: "Avistamientos",
+      value: String(refugeReports + criticalReports),
       detail: "Seguimiento",
-      icon: CheckCircle,
-      color: "text-[#10b981]",
+      icon: MapPin,
+      color: "text-[#f5c400]",
     },
     {
-      label: "En Peligro",
-      value: String(criticalReports),
-      detail: "Prioridad",
-      icon: AlertTriangle,
-      color: "text-[#ef4444]",
+      label: "Encontrados",
+      value: String(foundReports),
+      detail: "Confirmados",
+      icon: CheckCircle,
+      color: "text-[#10b981]",
     },
   ];
 }
