@@ -4,12 +4,9 @@ WORKDIR /build
 
 COPY pom.xml .
 
-RUN mvn -B -DskipTests dependency:go-offline
-
 COPY src ./src
 
 RUN mvn -B clean package -DskipTests
-
 
 FROM eclipse-temurin:21-jre-jammy
 
