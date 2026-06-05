@@ -32,7 +32,6 @@ services:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    image: petmatch-eureka-server:local
     container_name: eureka-server
     restart: unless-stopped
     ports:
@@ -362,7 +361,6 @@ services:
     build:
       context: ./ms-animal-type
       dockerfile: Dockerfile
-    image: petmatch-ms-animal-type:local
     container_name: ms-animal-type
     restart: unless-stopped
     ports:
@@ -392,7 +390,6 @@ services:
     build:
       context: ./ms-size
       dockerfile: Dockerfile
-    image: petmatch-ms-size:local
     container_name: ms-size
     restart: unless-stopped
     ports:
@@ -422,7 +419,6 @@ services:
     build:
       context: ./ms-race
       dockerfile: Dockerfile
-    image: petmatch-ms-race:local
     container_name: ms-race
     restart: unless-stopped
     ports:
@@ -455,7 +451,6 @@ services:
     build:
       context: ./ms-pet
       dockerfile: Dockerfile
-    image: petmatch-ms-pet:local
     container_name: ms-pet
     restart: unless-stopped
     ports:
@@ -494,7 +489,6 @@ services:
     build:
       context: ./ms-pet-color
       dockerfile: Dockerfile
-    image: petmatch-ms-pet-color:local
     container_name: ms-pet-color
     restart: unless-stopped
     ports:
@@ -530,7 +524,6 @@ services:
     build:
       context: ./ms-report-type
       dockerfile: Dockerfile
-    image: petmatch-ms-report-type:local
     container_name: ms-report-type
     restart: unless-stopped
     ports:
@@ -560,7 +553,6 @@ services:
     build:
       context: ./ms-report-status
       dockerfile: Dockerfile
-    image: petmatch-ms-report-status:local
     container_name: ms-report-status
     restart: unless-stopped
     ports:
@@ -590,7 +582,6 @@ services:
     build:
       context: ./ms-report
       dockerfile: Dockerfile
-    image: petmatch-ms-report:local
     container_name: ms-report
     restart: unless-stopped
     ports:
@@ -639,7 +630,6 @@ services:
     build:
       context: ./rol-service/rol-service
       dockerfile: Dockerfile
-    image: petmatch-rol-service:local
     container_name: rol-service
     restart: unless-stopped
     ports:
@@ -670,7 +660,6 @@ services:
     build:
       context: ./pais-service/pais-service
       dockerfile: Dockerfile
-    image: petmatch-pais-service:local
     container_name: pais-service
     restart: unless-stopped
     ports:
@@ -701,7 +690,6 @@ services:
     build:
       context: ./region-service/region-service
       dockerfile: Dockerfile
-    image: petmatch-region-service:local
     container_name: region-service
     restart: unless-stopped
     ports:
@@ -734,7 +722,6 @@ services:
     build:
       context: ./ciudad-service/ciudad-service
       dockerfile: Dockerfile
-    image: petmatch-ciudad-service:local
     container_name: ciudad-service
     restart: unless-stopped
     ports:
@@ -767,7 +754,6 @@ services:
     build:
       context: ./color-service/color-service
       dockerfile: Dockerfile
-    image: petmatch-color-service:local
     container_name: color-service
     restart: unless-stopped
     ports:
@@ -798,7 +784,6 @@ services:
     build:
       context: ./usuario-service/usuario-service
       dockerfile: Dockerfile
-    image: petmatch-usuario-service:local
     container_name: usuario-service
     restart: unless-stopped
     ports:
@@ -833,7 +818,6 @@ services:
     build:
       context: ./configuracion-usuario-service/configuracion-usuario-service
       dockerfile: Dockerfile
-    image: petmatch-configuracion-usuario-service:local
     container_name: configuracion-usuario-service
     restart: unless-stopped
     ports:
@@ -868,7 +852,6 @@ services:
     build:
       context: ./ubicacion-service/ubicacion-service
       dockerfile: Dockerfile
-    image: petmatch-ubicacion-service:local
     container_name: ubicacion-service
     restart: unless-stopped
     ports:
@@ -905,7 +888,6 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-    image: petmatch-api-gateway:local
     container_name: api-gateway
     restart: unless-stopped
     ports:

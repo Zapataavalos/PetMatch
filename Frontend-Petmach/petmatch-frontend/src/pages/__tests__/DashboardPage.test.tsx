@@ -28,7 +28,7 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByText("Luna")).toBeInTheDocument();
     expect(screen.getByText("Reportes vivos")).toBeInTheDocument();
-    expect(screen.getByText("Avistamientos")).toBeInTheDocument();
+    expect(screen.getByText("En peligro")).toBeInTheDocument();
 
     await user.type(screen.getByPlaceholderText("Buscar reporte..."), "Providencia");
 

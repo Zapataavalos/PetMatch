@@ -8,14 +8,12 @@ import { mockReports } from "../../test/testData";
 const reportApiMocks = vi.hoisted(() => ({
   getAll: vi.fn(),
   delete: vi.fn(),
-  markFound: vi.fn(),
 }));
 
 vi.mock("../../api/reportApi", () => ({
   reportApi: {
     getAll: reportApiMocks.getAll,
     delete: reportApiMocks.delete,
-    markFound: reportApiMocks.markFound,
   },
 }));
 
@@ -24,15 +22,6 @@ describe("ReportsPage", () => {
     vi.clearAllMocks();
     reportApiMocks.getAll.mockResolvedValue(mockReports);
     reportApiMocks.delete.mockResolvedValue(undefined);
-    reportApiMocks.markFound.mockImplementation((id: number) => {
-      const report = mockReports.find((item) => item.id === id);
-
-      if (!report) {
-        return Promise.reject(new Error("report not found"));
-      }
-
-      return Promise.resolve({ ...report, estado: "ENCONTRADO" });
-    });
   });
 
   it("lista reportes reales y filtra por estado", async () => {
@@ -49,18 +38,16 @@ describe("ReportsPage", () => {
     expect(screen.queryByText("Luna")).not.toBeInTheDocument();
   });
 
-  it("marca un reporte como encontrado sin eliminarlo del servicio", async () => {
+  it("marca un reporte como rescatado eliminandolo del servicio", async () => {
     const user = userEvent.setup();
 
     renderWithRouter(<ReportsPage />, "/reportes");
 
     expect(await screen.findByText("Luna")).toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("button", { name: "Encontrada" })[0]);
+    await user.click(screen.getAllByRole("button", { name: "Rescatado" })[0]);
 
-    await waitFor(() => expect(reportApiMocks.markFound).toHaveBeenCalledWith(1));
-    expect(reportApiMocks.delete).not.toHaveBeenCalled();
-    expect(screen.getByText("Luna")).toBeInTheDocument();
-    expect(screen.getByText("ENCONTRADO")).toBeInTheDocument();
+    await waitFor(() => expect(reportApiMocks.delete).toHaveBeenCalledWith(1));
+    expect(screen.queryByText("Luna")).not.toBeInTheDocument();
   });
 });

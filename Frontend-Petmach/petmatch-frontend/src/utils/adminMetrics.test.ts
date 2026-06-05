@@ -23,7 +23,6 @@ const reports: ReportApiResponse[] = [
   createReport(1, "PERDIDO", "2026-06-01T12:00:00.000Z"),
   createReport(2, "EN_REFUGIO", "2026-06-02T12:00:00.000Z"),
   createReport(3, "EN_PELIGRO", "2026-06-02T14:00:00.000Z"),
-  createReport(4, "ENCONTRADO", "2026-06-03T14:00:00.000Z"),
 ];
 
 describe("adminMetrics", () => {
@@ -32,9 +31,9 @@ describe("adminMetrics", () => {
 
     expect(stats.map((stat) => [stat.label, stat.value])).toEqual([
       ["Usuarios Activos", "2"],
-      ["Reportes Activos", "4"],
-      ["Avistamientos", "2"],
-      ["Encontrados", "1"],
+      ["Reportes Activos", "3"],
+      ["En Refugio", "1"],
+      ["En Peligro", "1"],
     ]);
   });
 
@@ -47,7 +46,6 @@ describe("adminMetrics", () => {
     expect(data).toHaveLength(7);
     expect(data.find((day) => day.key === "2026-06-01")?.count).toBe(1);
     expect(data.find((day) => day.key === "2026-06-02")?.count).toBe(2);
-    expect(data.find((day) => day.key === "2026-06-03")?.count).toBe(1);
     expect(data.find((day) => day.key === "2026-06-02")?.percent).toBe(100);
   });
 });

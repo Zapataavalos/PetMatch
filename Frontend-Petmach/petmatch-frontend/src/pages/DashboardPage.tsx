@@ -59,7 +59,6 @@ export function DashboardPage() {
       perdidos: reportes.filter((reporte) => reporte.estado === "PERDIDO").length,
       refugio: reportes.filter((reporte) => reporte.estado === "EN_REFUGIO").length,
       peligro: reportes.filter((reporte) => reporte.estado === "EN_PELIGRO").length,
-      encontrados: reportes.filter((reporte) => reporte.estado === "ENCONTRADO").length,
     }),
     [reportes]
   );
@@ -78,16 +77,16 @@ export function DashboardPage() {
       color: "text-yellow-300",
     },
     {
-      label: "Avistamientos",
-      value: counts.refugio + counts.peligro,
-      icon: AlertTriangle,
-      color: "text-red-400",
-    },
-    {
-      label: "Encontrados",
-      value: counts.encontrados,
+      label: "En refugio",
+      value: counts.refugio,
       icon: CheckCircle,
       color: "text-emerald-400",
+    },
+    {
+      label: "En peligro",
+      value: counts.peligro,
+      icon: AlertTriangle,
+      color: "text-red-400",
     },
   ];
 
@@ -300,9 +299,5 @@ function getStatusLabel(status: ReportStatus) {
     return "En refugio";
   }
 
-  if (status === "EN_PELIGRO") {
-    return "En peligro";
-  }
-
-  return "Encontrado";
+  return "En peligro";
 }

@@ -99,19 +99,19 @@ export function MatchesPage() {
     setResolvingId(match.id);
 
     try {
-      const [perdido, encontrado] = await Promise.all([
-        reportApi.markFound(match.perdido.id),
-        reportApi.markFound(match.encontrado.id),
+      await Promise.all([
+        reportApi.delete(match.perdido.id),
+        reportApi.delete(match.encontrado.id),
       ]);
 
       setReports((current) =>
-        current.map((report) =>
-          report.id === perdido.id ? perdido : report.id === encontrado.id ? encontrado : report
+        current.filter(
+          (report) => report.id !== match.perdido.id && report.id !== match.encontrado.id
         )
       );
       setSelectedMatch(null);
     } catch {
-      setError("No fue posible marcar la mascota como encontrada. Intenta nuevamente.");
+      setError("No fue posible confirmar la coincidencia. Intenta nuevamente.");
       await loadReports();
     } finally {
       setResolvingId(null);
@@ -136,8 +136,8 @@ export function MatchesPage() {
           </div>
 
           <p className="mt-4 max-w-3xl text-lg leading-relaxed text-[#b5b5c2]">
-            Coincidencias calculadas con reportes perdidos y avistamientos activos,
-            segun distancia, ubicacion, estado y detalles similares.
+            Coincidencias calculadas con reportes reales segun distancia,
+            ubicacion, estado y detalles similares.
           </p>
         </div>
 
@@ -191,7 +191,7 @@ export function MatchesPage() {
         <div className="mt-8 rounded-2xl border border-[#24242a] bg-[#17171b] p-8">
           <h2 className="text-2xl font-black">No hay coincidencias para mostrar</h2>
           <p className="mt-3 max-w-2xl text-[#aaaaba]">
-            Se necesitan reportes perdidos y avistamientos en refugio o en peligro
+            Se necesitan reportes perdidos y reportes encontrados o en peligro
             para calcular posibles matches.
           </p>
         </div>
@@ -242,7 +242,7 @@ function MatchCard({
     <article className="overflow-hidden rounded-2xl border border-[#25252b] bg-[#17171b]">
       <div className="relative grid h-44 grid-cols-2">
         <ReportImage report={match.perdido} label="PERDIDO" tone="lost" />
-        <ReportImage report={match.encontrado} label="AVISTAMIENTO" tone="found" />
+        <ReportImage report={match.encontrado} label="ENCONTRADO" tone="found" />
 
         <div className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#f5c400]/30 bg-[#1a1a1f] text-lg font-black text-[#f5c400]">
           {match.porcentaje}%
@@ -281,7 +281,7 @@ function MatchCard({
             className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#10b981] text-sm font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <CircleCheck size={16} />
-            {resolving ? "Marcando..." : "Encontrada"}
+            {resolving ? "Confirmando..." : "Confirmar"}
           </button>
         </div>
 
@@ -333,7 +333,7 @@ function MatchDetailsModal({
         <div className="max-h-[65vh] overflow-y-auto p-7">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             <ReportDetail report={match.perdido} title="Reporte perdido" />
-            <ReportDetail report={match.encontrado} title="Avistamiento candidato" />
+            <ReportDetail report={match.encontrado} title="Reporte encontrado" />
           </div>
 
           <div className="mt-6 rounded-2xl border border-[#24242a] bg-[#09090b] p-5">
@@ -357,7 +357,7 @@ function MatchDetailsModal({
           </Button>
           <Button type="button" onClick={onResolve} disabled={resolving}>
             <CircleCheck className="mr-2 inline" size={18} />
-            {resolving ? "Marcando..." : "Marcar como encontrada"}
+            {resolving ? "Confirmando..." : "Confirmar coincidencia"}
           </Button>
         </div>
       </div>

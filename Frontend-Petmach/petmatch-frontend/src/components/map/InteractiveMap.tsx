@@ -17,7 +17,6 @@ const markerColors: Record<ReportStatus, string> = {
   PERDIDO: "#f5c400",
   EN_REFUGIO: "#10b981",
   EN_PELIGRO: "#ef4444",
-  ENCONTRADO: "#60a5fa",
 };
 
 function createCustomIcon(status: ReportStatus) {
@@ -118,7 +117,7 @@ export function InteractiveMap({
 
               <p className="mt-1 text-xs text-[#8f8f9a]">{reporte.tiempo}</p>
 
-              {onRescued && reporte.estado !== "ENCONTRADO" && (
+              {onRescued && (
                 <button
                   type="button"
                   onClick={() => onRescued(reporte)}
@@ -126,7 +125,7 @@ export function InteractiveMap({
                   className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#10b981] px-3 text-sm font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <CircleCheck size={16} />
-                  {rescuingIds.has(reporte.id) ? "Marcando..." : "Encontrada"}
+                  {rescuingIds.has(reporte.id) ? "Marcando..." : "Rescatado"}
                 </button>
               )}
             </div>
