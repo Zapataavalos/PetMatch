@@ -33,6 +33,9 @@ describe("SettingsPage", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.lang = "";
+    document.documentElement.className = "";
+    delete document.documentElement.dataset.theme;
+    document.documentElement.style.colorScheme = "";
     vi.clearAllMocks();
     authMocks.useAuth.mockReturnValue({ user: mockAuthUser });
     configuracionApiMocks.getColors.mockResolvedValue(mockColors);
@@ -77,5 +80,24 @@ describe("SettingsPage", () => {
       )
     );
     expect(await screen.findByText("Settings saved.")).toBeInTheDocument();
+  });
+
+  it("oculta color principal y activa modo claro al desactivar modo oscuro", async () => {
+    const user = userEvent.setup();
+
+    renderWithAppProviders(<SettingsPage />, "/configuracion");
+
+    await waitFor(() => expect(configuracionApiMocks.getByUser).toHaveBeenCalledWith(7));
+
+    expect(screen.queryByLabelText("Color principal")).not.toBeInTheDocument();
+
+    const darkModeSwitch = screen.getByRole("switch", { name: "Modo oscuro" });
+    expect(darkModeSwitch).toHaveAttribute("aria-checked", "true");
+
+    await user.click(darkModeSwitch);
+
+    expect(darkModeSwitch).toHaveAttribute("aria-checked", "false");
+    expect(document.documentElement).toHaveClass("petmatch-light");
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 });

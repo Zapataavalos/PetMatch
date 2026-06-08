@@ -6,7 +6,6 @@ import {
   Mail,
   RefreshCw,
   Settings as SettingsIcon,
-  Shield,
   User,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -21,7 +20,7 @@ import { Input } from "../components/ui/Input";
 import { useI18n } from "../i18n/useI18n";
 import type { Usuario, UserRole } from "../types";
 
-type ProfileSection = "personal" | "security" | "preferences";
+type ProfileSection = "personal" | "preferences";
 
 export function ProfilePage() {
   const { user, role, logout, updateSession } = useAuth();
@@ -167,12 +166,6 @@ export function ProfilePage() {
             onClick={() => setActiveSection("personal")}
           />
           <ProfileNavButton
-            active={activeSection === "security"}
-            icon={Shield}
-            label={t("profile.security")}
-            onClick={() => setActiveSection("security")}
-          />
-          <ProfileNavButton
             active={activeSection === "preferences"}
             icon={SettingsIcon}
             label={t("profile.preferences")}
@@ -261,29 +254,6 @@ export function ProfilePage() {
                 </Button>
               </div>
             </form>
-          </Card>
-        )}
-
-        {activeSection === "security" && (
-          <Card className="p-8">
-            <h2 className="text-3xl font-black">{t("profile.security")}</h2>
-            <div className="mt-6 h-px bg-[#292930]" />
-
-            <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-              <ProfileInfoTile title={t("profile.session")} value={currentEmail || "-"} />
-              <ProfileInfoTile title={t("profile.account")} value={currentRole} />
-            </div>
-
-            <div className="mt-10 flex flex-col justify-end gap-3 sm:flex-row">
-              <Button type="button" variant="secondary" onClick={() => navigate("/configuracion")}>
-                <SettingsIcon className="mr-2 inline" size={17} />
-                {t("profile.openSettings")}
-              </Button>
-              <Button type="button" variant="danger" onClick={logout}>
-                <LogOut className="mr-2 inline" size={17} />
-                {t("profile.logout")}
-              </Button>
-            </div>
           </Card>
         )}
 

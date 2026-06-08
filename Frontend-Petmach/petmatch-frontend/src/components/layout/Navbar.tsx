@@ -1,5 +1,4 @@
 import {
-  Bell,
   LayoutDashboard,
   Map,
   PawPrint,
@@ -12,6 +11,7 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { useI18n } from "../../i18n/useI18n";
+import { NotificationBell } from "../notifications/NotificationBell";
 
 const baseNavItems = [
   {
@@ -121,7 +121,7 @@ export function Navbar() {
             </button>
           )}
 
-          <Bell size={20} className="text-[#a7a7b2]" />
+          <NotificationBell />
 
           <button
             onClick={() => navigate("/nuevo-reporte")}

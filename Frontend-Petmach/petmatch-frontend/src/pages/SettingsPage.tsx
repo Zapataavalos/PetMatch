@@ -13,7 +13,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { configuracionApi } from "../api/configuracionApi";
 import { useAuth } from "../auth/useAuth";
@@ -21,9 +21,13 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { CHILE_COUNTRY } from "../i18n/I18nContextCore";
 import { useI18n } from "../i18n/useI18n";
+import { requestBrowserNotificationPermission } from "../notifications/NotificationContextCore";
 import type { AppLanguage, ColorCatalogo, ConfiguracionUsuarioResponse } from "../types";
-
-const SETTINGS_KEY = "petmatch_user_settings";
+import {
+  applyThemePreference,
+  USER_SETTINGS_KEY,
+  USER_SETTINGS_UPDATED_EVENT,
+} from "../utils/theme";
 
 const FALLBACK_COLORS: ColorCatalogo[] = [
   { idColor: 1, nombreColor: "AMARILLO PETMATCH", codigoHexadecimal: "#F5C400" },
@@ -56,7 +60,6 @@ export function SettingsPage() {
   const { language, setLanguage, t } = useI18n();
   const [activeTab, setActiveTab] = useState<SettingsTab>("preferences");
   const [settings, setSettings] = useState<LocalSettings>(() => readLocalSettings(language));
-  const [colorOptions, setColorOptions] = useState<ColorCatalogo[]>(FALLBACK_COLORS);
   const [configurationId, setConfigurationId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,8 +67,13 @@ export function SettingsPage() {
   const [notice, setNotice] = useState<Notice | null>(null);
 
   useEffect(() => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    localStorage.setItem(USER_SETTINGS_KEY, JSON.stringify(settings));
+    window.dispatchEvent(new Event(USER_SETTINGS_UPDATED_EVENT));
   }, [settings]);
+
+  useEffect(() => {
+    applyThemePreference(settings.modoOscuro);
+  }, [settings.modoOscuro]);
 
   useEffect(() => {
     setSettings((current) =>
@@ -105,7 +113,6 @@ export function SettingsPage() {
         return;
       }
 
-      setColorOptions(nextColors);
       setBackendOnline(!serviceWarning);
 
       setSettings((current) => {
@@ -132,14 +139,6 @@ export function SettingsPage() {
     };
   }, [setLanguage, user?.idUsuario]);
 
-  const selectedColor = useMemo(
-    () =>
-      colorOptions.find((color) => color.idColor === settings.idColor) ??
-      colorOptions[0] ??
-      FALLBACK_COLORS[0],
-    [colorOptions, settings.idColor]
-  );
-
   const notificationsActive =
     settings.matchAlerts || settings.nearbyReports || settings.emailUpdates;
 
@@ -155,6 +154,23 @@ export function SettingsPage() {
   const handleLanguageChange = (nextLanguage: AppLanguage) => {
     setLanguage(nextLanguage);
     updateSettings({ idioma: nextLanguage });
+  };
+
+  const handleNotificationSettingChange = (
+    key: "matchAlerts" | "nearbyReports" | "emailUpdates",
+    checked: boolean
+  ) => {
+    if (key === "matchAlerts") {
+      updateSettings({ matchAlerts: checked });
+    } else if (key === "nearbyReports") {
+      updateSettings({ nearbyReports: checked });
+    } else {
+      updateSettings({ emailUpdates: checked });
+    }
+
+    if (checked && key !== "emailUpdates") {
+      void requestBrowserNotificationPermission();
+    }
   };
 
   const handleSave = async () => {
@@ -246,51 +262,20 @@ export function SettingsPage() {
                   <h2 className="text-2xl font-black">{t("settings.appearance")}</h2>
                 </div>
 
-                <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-                      {t("settings.primaryColor")}
-                    </span>
+                <div className="mt-8 max-w-md">
+                  <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
+                    {t("settings.theme")}
+                  </span>
 
-                    <select
-                      value={settings.idColor}
-                      onChange={(event) =>
-                        updateSettings({ idColor: Number(event.target.value) })
-                      }
-                      disabled={loading || saving}
-                      className="h-14 w-full rounded-xl border border-[#2b2b31] bg-[#09090b] px-4 text-white outline-none focus:border-[#f5c400]"
-                    >
-                      {colorOptions.map((color) => (
-                        <option key={color.idColor} value={color.idColor}>
-                          {formatColorName(color.nombreColor)}
-                        </option>
-                      ))}
-                    </select>
-
-                    <span className="mt-3 flex items-center gap-2 text-sm font-bold text-[#aaaaba]">
-                      <span
-                        className="h-4 w-4 rounded-full border border-white/20"
-                        style={{ backgroundColor: selectedColor.codigoHexadecimal }}
-                      />
-                      {selectedColor.codigoHexadecimal}
-                    </span>
-                  </label>
-
-                  <div>
-                    <span className="mb-2 block text-sm font-semibold text-[#a8a8b3]">
-                      {t("settings.theme")}
-                    </span>
-
-                    <SettingToggle
-                      title={t("settings.darkMode")}
-                      description={settings.modoOscuro ? t("settings.darkMode") : t("settings.theme")}
-                      checked={settings.modoOscuro}
-                      disabled={loading || saving}
-                      onChange={(checked) => updateSettings({ modoOscuro: checked })}
-                      compact
-                      icon={<Moon size={20} className="text-[#f5c400]" />}
-                    />
-                  </div>
+                  <SettingToggle
+                    title={t("settings.darkMode")}
+                    description={settings.modoOscuro ? t("settings.darkMode") : t("settings.theme")}
+                    checked={settings.modoOscuro}
+                    disabled={loading || saving}
+                    onChange={(checked) => updateSettings({ modoOscuro: checked })}
+                    compact
+                    icon={<Moon size={20} className="text-[#f5c400]" />}
+                  />
                 </div>
               </Card>
 
@@ -354,7 +339,9 @@ export function SettingsPage() {
                   description={t("settings.matchAlertsDescription")}
                   checked={settings.matchAlerts}
                   disabled={loading || saving}
-                  onChange={(checked) => updateSettings({ matchAlerts: checked })}
+                  onChange={(checked) =>
+                    handleNotificationSettingChange("matchAlerts", checked)
+                  }
                 />
 
                 <SettingToggle
@@ -362,7 +349,9 @@ export function SettingsPage() {
                   description={t("settings.nearbyReportsDescription")}
                   checked={settings.nearbyReports}
                   disabled={loading || saving}
-                  onChange={(checked) => updateSettings({ nearbyReports: checked })}
+                  onChange={(checked) =>
+                    handleNotificationSettingChange("nearbyReports", checked)
+                  }
                 />
 
                 <SettingToggle
@@ -370,7 +359,9 @@ export function SettingsPage() {
                   description={t("settings.emailUpdatesDescription")}
                   checked={settings.emailUpdates}
                   disabled={loading || saving}
-                  onChange={(checked) => updateSettings({ emailUpdates: checked })}
+                  onChange={(checked) =>
+                    handleNotificationSettingChange("emailUpdates", checked)
+                  }
                 />
               </div>
             </Card>
@@ -471,6 +462,7 @@ function SettingToggle({
       <button
         type="button"
         role="switch"
+        aria-label={title}
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
@@ -527,7 +519,7 @@ function StatusPanel({
 
 function readLocalSettings(language: AppLanguage): LocalSettings {
   const fallback = createDefaultSettings(language);
-  const stored = localStorage.getItem(SETTINGS_KEY);
+  const stored = localStorage.getItem(USER_SETTINGS_KEY);
 
   if (!stored) {
     return fallback;
@@ -598,12 +590,6 @@ function ensureValidColor(settings: LocalSettings, colors: ColorCatalogo[]): Loc
     ...settings,
     idColor: colors[0]?.idColor ?? FALLBACK_COLORS[0].idColor,
   };
-}
-
-function formatColorName(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function isNotFound(error: unknown) {

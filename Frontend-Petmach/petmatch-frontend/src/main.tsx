@@ -5,6 +5,9 @@ import "./index.css";
 import { AppRouter } from "./routes/AppRouter";
 import { AuthProvider } from "./auth/AuthContext";
 import { I18nProvider } from "./i18n/I18nContext";
+import { applyStoredTheme } from "./utils/theme";
+
+applyStoredTheme();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

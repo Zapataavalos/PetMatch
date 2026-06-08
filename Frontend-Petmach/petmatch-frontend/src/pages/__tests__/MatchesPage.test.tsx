@@ -7,13 +7,13 @@ import type { ReportApiResponse } from "../../types";
 
 const reportApiMocks = vi.hoisted(() => ({
   getAll: vi.fn(),
-  markFound: vi.fn(),
+  delete: vi.fn(),
 }));
 
 vi.mock("../../api/reportApi", () => ({
   reportApi: {
     getAll: reportApiMocks.getAll,
-    markFound: reportApiMocks.markFound,
+    delete: reportApiMocks.delete,
   },
 }));
 
@@ -21,15 +21,7 @@ describe("MatchesPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     reportApiMocks.getAll.mockResolvedValue(matchReports);
-    reportApiMocks.markFound.mockImplementation((id: number) => {
-      const report = matchReports.find((item) => item.id === id);
-
-      if (!report) {
-        return Promise.reject(new Error("report not found"));
-      }
-
-      return Promise.resolve({ ...report, estado: "ENCONTRADO" });
-    });
+    reportApiMocks.delete.mockResolvedValue(undefined);
   });
 
   it("muestra coincidencias y confirma la mascota como encontrada", async () => {
@@ -38,13 +30,13 @@ describe("MatchesPage", () => {
     renderWithRouter(<MatchesPage />, "/coincidencias");
 
     expect(await screen.findByText("REP-001 con REP-002")).toBeInTheDocument();
-    expect(screen.getByText("AVISTAMIENTO")).toBeInTheDocument();
+    expect(screen.getByText("ENCONTRADO")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Encontrada" }));
+    await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() => {
-      expect(reportApiMocks.markFound).toHaveBeenCalledWith(1);
-      expect(reportApiMocks.markFound).toHaveBeenCalledWith(2);
+      expect(reportApiMocks.delete).toHaveBeenCalledWith(1);
+      expect(reportApiMocks.delete).toHaveBeenCalledWith(2);
     });
 
     await waitFor(() =>
