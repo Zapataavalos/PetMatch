@@ -2,7 +2,7 @@ package com.petmatch.mspet.service;
 
 import com.petmatch.mspet.dto.PetRequest;
 import com.petmatch.mspet.dto.PetResponse;
-import com.petmatch.mspet.messaging.EventPublisher;
+import com.petmatch.mspet.messaging.PetEventPublisher;
 import com.petmatch.mspet.model.Pet;
 import com.petmatch.mspet.model.PetStatus;
 import com.petmatch.mspet.repository.PetRepository;
@@ -33,7 +33,7 @@ class PetServiceTest {
     private PetRepository petRepository;
 
     @Mock
-    private EventPublisher eventPublisher;
+    private PetEventPublisher eventPublisher;
 
     @InjectMocks
     private PetService petService;

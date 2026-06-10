@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../auth/useAuth";
+import { getApiErrorMessage } from "../api/apiErrors";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -23,8 +24,13 @@ export function LoginPage() {
     try {
       await login({ email, contrasena });
       navigate("/mapa");
-    } catch {
-      setError("Credenciales inválidas o servidor no disponible.");
+    } catch (error) {
+      setError(
+        getApiErrorMessage(
+          error,
+          "Credenciales invalidas o servidor no disponible."
+        )
+      );
     } finally {
       setLoading(false);
     }

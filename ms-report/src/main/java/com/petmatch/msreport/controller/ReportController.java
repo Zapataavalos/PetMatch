@@ -2,12 +2,13 @@ package com.petmatch.msreport.controller;
 
 import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
-import com.petmatch.msreport.service.ReportService;
+import com.petmatch.msreport.service.ReportOperations;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +21,9 @@ import java.util.List;
 @RequestMapping("/api/report")
 public class ReportController {
 
-    private final ReportService reportService;
+    private final ReportOperations reportService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportOperations reportService) {
         this.reportService = reportService;
     }
 
@@ -40,5 +41,10 @@ public class ReportController {
     public ResponseEntity<Void> eliminarReporte(@PathVariable Long id) {
         reportService.eliminarReporte(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/found")
+    public ResponseEntity<ReportResponse> marcarReporteComoEncontrado(@PathVariable Long id) {
+        return ResponseEntity.ok(reportService.marcarComoEncontrado(id));
     }
 }

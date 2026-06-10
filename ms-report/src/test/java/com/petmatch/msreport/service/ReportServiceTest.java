@@ -2,7 +2,7 @@ package com.petmatch.msreport.service;
 
 import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
-import com.petmatch.msreport.messaging.EventPublisher;
+import com.petmatch.msreport.messaging.ReportEventPublisher;
 import com.petmatch.msreport.model.Report;
 import com.petmatch.msreport.model.ReportStatus;
 import com.petmatch.msreport.repository.ReportRepository;
@@ -34,7 +34,7 @@ class ReportServiceTest {
     private ReportRepository reportRepository;
 
     @Mock
-    private EventPublisher eventPublisher;
+    private ReportEventPublisher eventPublisher;
 
     @InjectMocks
     private ReportService reportService;

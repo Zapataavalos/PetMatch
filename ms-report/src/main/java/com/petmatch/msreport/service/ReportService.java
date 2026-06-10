@@ -2,8 +2,9 @@ package com.petmatch.msreport.service;
 
 import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
-import com.petmatch.msreport.messaging.EventPublisher;
+import com.petmatch.msreport.messaging.ReportEventPublisher;
 import com.petmatch.msreport.model.Report;
+import com.petmatch.msreport.model.ReportStatus;
 import com.petmatch.msreport.repository.ReportRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ReportService {
+public class ReportService implements ReportOperations {
 
     private static final String DEFAULT_IMAGE_URL =
             "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=600&auto=format&fit=crop";
@@ -21,13 +22,14 @@ public class ReportService {
     private static final double DEFAULT_LONGITUDE = -70.6693;
 
     private final ReportRepository reportRepository;
-    private final EventPublisher eventPublisher;
+    private final ReportEventPublisher eventPublisher;
 
-    public ReportService(ReportRepository reportRepository, EventPublisher eventPublisher) {
+    public ReportService(ReportRepository reportRepository, ReportEventPublisher eventPublisher) {
         this.reportRepository = reportRepository;
         this.eventPublisher = eventPublisher;
     }
 
+    @Override
     public List<ReportResponse> listarReportes() {
         return reportRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
@@ -35,6 +37,7 @@ public class ReportService {
                 .toList();
     }
 
+    @Override
     public ReportResponse crearReporte(ReportRequest request) {
         Report report = new Report();
         report.setCodigo("PENDING");
@@ -55,6 +58,7 @@ public class ReportService {
         return response;
     }
 
+    @Override
     public void eliminarReporte(Long id) {
         if (!reportRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado");
@@ -62,6 +66,18 @@ public class ReportService {
 
         reportRepository.deleteById(id);
         eventPublisher.publish("DELETED", "REPORT", Map.of("id", id));
+    }
+
+    @Override
+    public ReportResponse marcarComoEncontrado(Long id) {
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporte no encontrado"));
+
+        report.setEstado(ReportStatus.ENCONTRADO);
+        Report saved = reportRepository.save(report);
+        ReportResponse response = toResponse(saved);
+        eventPublisher.publish("FOUND", "REPORT", response);
+        return response;
     }
 
     private ReportResponse toResponse(Report report) {

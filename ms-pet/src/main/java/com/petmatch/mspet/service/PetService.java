@@ -2,7 +2,7 @@ package com.petmatch.mspet.service;
 
 import com.petmatch.mspet.dto.PetRequest;
 import com.petmatch.mspet.dto.PetResponse;
-import com.petmatch.mspet.messaging.EventPublisher;
+import com.petmatch.mspet.messaging.PetEventPublisher;
 import com.petmatch.mspet.model.Pet;
 import com.petmatch.mspet.model.PetStatus;
 import com.petmatch.mspet.repository.PetRepository;
@@ -14,19 +14,20 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class PetService {
+public class PetService implements PetOperations {
 
     private static final String DEFAULT_IMAGE_URL =
             "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=600&auto=format&fit=crop";
 
     private final PetRepository petRepository;
-    private final EventPublisher eventPublisher;
+    private final PetEventPublisher eventPublisher;
 
-    public PetService(PetRepository petRepository, EventPublisher eventPublisher) {
+    public PetService(PetRepository petRepository, PetEventPublisher eventPublisher) {
         this.petRepository = petRepository;
         this.eventPublisher = eventPublisher;
     }
 
+    @Override
     public List<PetResponse> listarMascotas() {
         return petRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
@@ -34,10 +35,12 @@ public class PetService {
                 .toList();
     }
 
+    @Override
     public PetResponse buscarMascota(Long id) {
         return toResponse(findById(id));
     }
 
+    @Override
     public PetResponse crearMascota(PetRequest request) {
         Pet pet = new Pet();
         applyRequest(pet, request);
@@ -48,6 +51,7 @@ public class PetService {
         return response;
     }
 
+    @Override
     public PetResponse actualizarMascota(Long id, PetRequest request) {
         Pet pet = findById(id);
         applyRequest(pet, request);
@@ -58,6 +62,7 @@ public class PetService {
         return response;
     }
 
+    @Override
     public void eliminarMascota(Long id) {
         if (!petRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada");

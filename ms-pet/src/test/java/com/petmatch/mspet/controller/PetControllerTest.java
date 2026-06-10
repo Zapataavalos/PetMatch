@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.petmatch.mspet.dto.PetRequest;
 import com.petmatch.mspet.dto.PetResponse;
 import com.petmatch.mspet.model.PetStatus;
-import com.petmatch.mspet.service.PetService;
+import com.petmatch.mspet.service.PetOperations;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -41,7 +41,7 @@ class PetControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private PetService petService;
+    private PetOperations petService;
 
     @Test
     void listarMascotasRetornaOkYJson() throws Exception {

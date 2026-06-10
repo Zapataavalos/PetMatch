@@ -5,6 +5,8 @@ import com.petmatch.usuario_service.Repository.RolReferenciaRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import java.util.List;
 
@@ -18,6 +20,7 @@ public class DefaultRoleReferenceInitializer {
     );
 
     @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     public CommandLineRunner seedDefaultRoleReferences(RolReferenciaRepository rolReferenciaRepository) {
         return args -> rolReferenciaRepository.saveAll(DEFAULT_ROLE_REFERENCES);
     }
