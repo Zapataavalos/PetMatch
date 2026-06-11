@@ -24,5 +24,5 @@ api.interceptors.request.use((config) => {
 function resolveApiTimeout() {
   const timeout = Number(import.meta.env.VITE_API_TIMEOUT_MS);
 
-  return Number.isFinite(timeout) && timeout > 0 ? timeout : 15000;
+  return Number.isFinite(timeout) && timeout > 0 ? timeout : 20000;
 }

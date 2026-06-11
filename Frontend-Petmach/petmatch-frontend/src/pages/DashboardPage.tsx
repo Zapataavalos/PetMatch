@@ -299,5 +299,9 @@ function getStatusLabel(status: ReportStatus) {
     return "En refugio";
   }
 
+  if (status === "ENCONTRADO") {
+    return "Encontrado";
+  }
+
   return "En peligro";
 }

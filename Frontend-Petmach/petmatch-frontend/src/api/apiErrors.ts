@@ -20,8 +20,12 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
     return data.message;
   }
 
+  if (error.response?.status === 504) {
+    return "El API Gateway no recibio respuesta de usuario-service. Revisa que Docker y el microservicio de usuarios esten levantados.";
+  }
+
   if (error.code === "ECONNABORTED") {
-    return "El servidor tardo demasiado en responder. Revisa que Docker y los microservicios esten levantados.";
+    return "El servidor tardo demasiado en responder. Revisa que Docker, el API Gateway y usuario-service esten levantados.";
   }
 
   if (!error.response) {

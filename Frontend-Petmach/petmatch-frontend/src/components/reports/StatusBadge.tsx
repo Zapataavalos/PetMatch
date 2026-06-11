@@ -16,7 +16,12 @@ const statusConfig = {
     className: "bg-[#ef4444]/10 text-[#ef4444]",
     dot: "bg-[#ef4444]",
   },
-};
+  ENCONTRADO: {
+    label: "ENCONTRADO",
+    className: "bg-[#60a5fa]/10 text-[#60a5fa]",
+    dot: "bg-[#60a5fa]",
+  },
+} satisfies Record<ReportStatus, { label: string; className: string; dot: string }>;
 
 export function StatusBadge({ status }: { status: ReportStatus }) {
   const config = statusConfig[status];

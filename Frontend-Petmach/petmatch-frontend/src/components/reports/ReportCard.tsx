@@ -12,6 +12,7 @@ const borderByStatus = {
   PERDIDO: "border-[#f5c400]/30 bg-[#f5c400]/10",
   EN_REFUGIO: "border-[#10b981]/30 bg-[#10b981]/10",
   EN_PELIGRO: "border-[#ef4444]/30 bg-[#ef4444]/10",
+  ENCONTRADO: "border-[#60a5fa]/30 bg-[#60a5fa]/10",
 };
 
 export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardProps) {

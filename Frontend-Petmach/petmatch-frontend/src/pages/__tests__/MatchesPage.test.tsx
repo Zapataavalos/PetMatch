@@ -8,12 +8,14 @@ import type { ReportApiResponse } from "../../types";
 const reportApiMocks = vi.hoisted(() => ({
   getAll: vi.fn(),
   delete: vi.fn(),
+  markFound: vi.fn(),
 }));
 
 vi.mock("../../api/reportApi", () => ({
   reportApi: {
     getAll: reportApiMocks.getAll,
     delete: reportApiMocks.delete,
+    markFound: reportApiMocks.markFound,
   },
 }));
 
@@ -22,6 +24,7 @@ describe("MatchesPage", () => {
     vi.clearAllMocks();
     reportApiMocks.getAll.mockResolvedValue(matchReports);
     reportApiMocks.delete.mockResolvedValue(undefined);
+    reportApiMocks.markFound.mockResolvedValue({ ...matchReports[0], estado: "ENCONTRADO" });
   });
 
   it("muestra coincidencias y confirma la mascota como encontrada", async () => {
@@ -35,8 +38,8 @@ describe("MatchesPage", () => {
     await user.click(screen.getByRole("button", { name: "Confirmar" }));
 
     await waitFor(() => {
-      expect(reportApiMocks.delete).toHaveBeenCalledWith(1);
-      expect(reportApiMocks.delete).toHaveBeenCalledWith(2);
+      expect(reportApiMocks.markFound).toHaveBeenCalledWith(1);
+      expect(reportApiMocks.markFound).toHaveBeenCalledWith(2);
     });
 
     await waitFor(() =>

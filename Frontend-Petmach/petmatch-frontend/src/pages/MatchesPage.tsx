@@ -100,8 +100,8 @@ export function MatchesPage() {
 
     try {
       await Promise.all([
-        reportApi.delete(match.perdido.id),
-        reportApi.delete(match.encontrado.id),
+        reportApi.markFound(match.perdido.id),
+        reportApi.markFound(match.encontrado.id),
       ]);
 
       setReports((current) =>

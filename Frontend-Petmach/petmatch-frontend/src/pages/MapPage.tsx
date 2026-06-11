@@ -80,7 +80,7 @@ export function MapPage() {
     setReportes((current) => current.filter((item) => item.id !== reporte.id));
 
     try {
-      await reportApi.delete(reporte.id);
+      await reportApi.markFound(reporte.id);
     } catch {
       setError("No fue posible marcar el reporte como rescatado.");
       setReportes((current) =>

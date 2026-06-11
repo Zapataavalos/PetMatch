@@ -17,6 +17,7 @@ const markerColors: Record<ReportStatus, string> = {
   PERDIDO: "#f5c400",
   EN_REFUGIO: "#10b981",
   EN_PELIGRO: "#ef4444",
+  ENCONTRADO: "#60a5fa",
 };
 
 function createCustomIcon(status: ReportStatus) {

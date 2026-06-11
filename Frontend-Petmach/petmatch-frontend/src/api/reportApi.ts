@@ -15,4 +15,9 @@ export const reportApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/api/report/${id}`);
   },
+
+  markFound: async (id: number): Promise<ReportApiResponse> => {
+    const { data } = await api.patch<ReportApiResponse>(`/api/report/${id}/found`);
+    return data;
+  },
 };
