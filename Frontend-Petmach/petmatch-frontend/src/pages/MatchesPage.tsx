@@ -99,16 +99,16 @@ export function MatchesPage() {
     setResolvingId(match.id);
 
     try {
-      await Promise.all([
+      const updatedReports = await Promise.all([
         reportApi.markFound(match.perdido.id),
         reportApi.markFound(match.encontrado.id),
       ]);
 
-      setReports((current) =>
-        current.filter(
-          (report) => report.id !== match.perdido.id && report.id !== match.encontrado.id
-        )
-      );
+      setReports((current) => {
+        const updatesById = new Map(updatedReports.map((report) => [report.id, report]));
+
+        return current.map((report) => updatesById.get(report.id) ?? report);
+      });
       setSelectedMatch(null);
     } catch {
       setError("No fue posible confirmar la coincidencia. Intenta nuevamente.");

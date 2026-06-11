@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
 import com.petmatch.msreport.model.ReportStatus;
-import com.petmatch.msreport.service.ReportOperations;
+import com.petmatch.msreport.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,7 +40,7 @@ class ReportControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private ReportOperations reportService;
+    private ReportService reportService;
 
     @Test
     void listarReportesRetornaOkYJson() throws Exception {

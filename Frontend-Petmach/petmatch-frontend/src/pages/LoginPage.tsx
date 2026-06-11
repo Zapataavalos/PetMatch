@@ -5,7 +5,6 @@ import type { FormEvent } from "react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../auth/useAuth";
-import { getApiErrorMessage } from "../api/apiErrors";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -24,13 +23,8 @@ export function LoginPage() {
     try {
       await login({ email, contrasena });
       navigate("/mapa");
-    } catch (error) {
-      setError(
-        getApiErrorMessage(
-          error,
-          "Credenciales invalidas o servidor no disponible."
-        )
-      );
+    } catch {
+      setError("Credenciales inválidas o servidor no disponible.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +41,7 @@ export function LoginPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f5c400] text-xl">
               🐾
             </div>
-            <span className="text-2xl font-black">PetTracker</span>
+            <span className="text-2xl font-black">PetMatch</span>
           </div>
 
           <div className="max-w-[540px] pb-10">

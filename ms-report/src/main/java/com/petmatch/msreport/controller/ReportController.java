@@ -2,7 +2,7 @@ package com.petmatch.msreport.controller;
 
 import com.petmatch.msreport.dto.ReportRequest;
 import com.petmatch.msreport.dto.ReportResponse;
-import com.petmatch.msreport.service.ReportOperations;
+import com.petmatch.msreport.service.ReportService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +21,9 @@ import java.util.List;
 @RequestMapping("/api/report")
 public class ReportController {
 
-    private final ReportOperations reportService;
+    private final ReportService reportService;
 
-    public ReportController(ReportOperations reportService) {
+    public ReportController(ReportService reportService) {
         this.reportService = reportService;
     }
 

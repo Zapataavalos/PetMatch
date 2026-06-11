@@ -21,7 +21,7 @@ const markerColors: Record<ReportStatus, string> = {
 };
 
 function createCustomIcon(status: ReportStatus) {
-  const color = markerColors[status];
+  const color = markerColors[status] ?? "#85858f";
 
   return L.divIcon({
     className: "custom-pet-marker",
@@ -118,7 +118,7 @@ export function InteractiveMap({
 
               <p className="mt-1 text-xs text-[#8f8f9a]">{reporte.tiempo}</p>
 
-              {onRescued && (
+              {onRescued && reporte.estado !== "ENCONTRADO" && (
                 <button
                   type="button"
                   onClick={() => onRescued(reporte)}

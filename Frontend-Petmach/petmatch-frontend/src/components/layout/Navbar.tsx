@@ -77,7 +77,7 @@ export function Navbar() {
             <span className="text-lg font-black">🐾</span>
           </div>
           <span className="text-xl font-black tracking-tight text-white">
-            PetTracker
+            PetMatch
           </span>
         </button>
 

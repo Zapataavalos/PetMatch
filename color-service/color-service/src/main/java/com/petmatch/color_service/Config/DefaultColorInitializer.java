@@ -32,11 +32,12 @@ public class DefaultColorInitializer {
             for (DefaultColor color : DEFAULT_COLORS) {
                 jdbcTemplate.update(
                         """
-                        insert into color (id_color, nombre_color, codigo_hexadecimal)
-                        values (?, ?, ?)
-                        on duplicate key update nombre_color = values(nombre_color),
-                                                codigo_hexadecimal = values(codigo_hexadecimal)
-                        """,
+                                insert into color (id_color, nombre_color, codigo_hexadecimal)
+                                values (?, ?, ?)
+                                on duplicate key update
+                                    nombre_color = values(nombre_color),
+                                    codigo_hexadecimal = values(codigo_hexadecimal)
+                                """,
                         color.idColor(),
                         color.nombreColor(),
                         color.codigoHexadecimal()
@@ -46,11 +47,7 @@ public class DefaultColorInitializer {
                     try {
                         colorEventPublisher.publicarColorCreado(savedColor);
                     } catch (RuntimeException exception) {
-                        log.warn(
-                                "No fue posible publicar el color base {}. configuracion-usuario-service inicializa sus referencias locales.",
-                                savedColor.getNombreColor(),
-                                exception
-                        );
+                        log.warn("No fue posible publicar el color base {}.", savedColor.getNombreColor(), exception);
                     }
                 });
             }

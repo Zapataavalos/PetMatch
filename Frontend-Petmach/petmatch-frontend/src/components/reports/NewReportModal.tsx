@@ -185,6 +185,11 @@ export function NewReportModal({
       label: "En peligro",
       color: "bg-[#ef4444]",
     },
+    {
+      value: "ENCONTRADO",
+      label: "Encontrada",
+      color: "bg-[#60a5fa]",
+    },
   ];
 
   return (
@@ -221,7 +226,7 @@ export function NewReportModal({
               Tipo de reporte
             </span>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {types.map((item) => (
                 <button
                   key={item.value}

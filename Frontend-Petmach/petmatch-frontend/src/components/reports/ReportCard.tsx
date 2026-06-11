@@ -15,10 +15,14 @@ const borderByStatus = {
   ENCONTRADO: "border-[#60a5fa]/30 bg-[#60a5fa]/10",
 };
 
+const fallbackBorder = "border-[#24242a] bg-[#17171b]";
+
 export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardProps) {
+  const canMarkRescued = Boolean(onRescued) && reporte.estado !== "ENCONTRADO";
+
   return (
     <article
-      className={`rounded-2xl border p-3 transition hover:scale-[1.01] ${borderByStatus[reporte.estado]}`}
+      className={`rounded-2xl border p-3 transition hover:scale-[1.01] ${borderByStatus[reporte.estado] ?? fallbackBorder}`}
     >
       <div className="flex gap-4">
         <img
@@ -33,10 +37,10 @@ export function ReportCard({ reporte, onRescued, rescuing = false }: ReportCardP
             <div className="flex shrink-0 flex-col items-end gap-2">
               <StatusBadge status={reporte.estado} />
 
-              {onRescued && (
+              {canMarkRescued && (
                 <button
                   type="button"
-                  onClick={() => onRescued(reporte)}
+                  onClick={() => onRescued?.(reporte)}
                   disabled={rescuing}
                   className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#10b981] px-3 text-xs font-black text-black transition hover:bg-[#34d399] disabled:cursor-not-allowed disabled:opacity-60"
                 >

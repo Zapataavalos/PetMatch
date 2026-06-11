@@ -1,11 +1,11 @@
 import { ArrowRight, Lock, Mail, User } from "lucide-react";
+import { isAxiosError } from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { useAuth } from "../auth/useAuth";
-import { getApiErrorMessage } from "../api/apiErrors";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -49,7 +49,7 @@ export function RegisterPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f5c400] text-xl">
               🐾
             </div>
-            <span className="text-2xl font-black">PetTracker</span>
+            <span className="text-2xl font-black">PetMatch</span>
           </div>
 
           <div className="max-w-[540px] pb-10">
@@ -125,9 +125,27 @@ export function RegisterPage() {
   );
 }
 
+interface ApiErrorResponse {
+  message?: string;
+  errors?: Record<string, string>;
+}
+
 function getRegisterErrorMessage(error: unknown) {
-  return getApiErrorMessage(
-    error,
-    "No fue posible crear la cuenta. Revisa los datos ingresados."
-  );
+  if (isAxiosError<ApiErrorResponse>(error)) {
+    const data = error.response?.data;
+
+    if (data?.errors) {
+      return Object.values(data.errors).join(" ");
+    }
+
+    if (data?.message) {
+      return data.message;
+    }
+
+    if (error.response?.status === 401) {
+      return "El registro no esta disponible en este momento. Intenta nuevamente.";
+    }
+  }
+
+  return "No fue posible crear la cuenta. Revisa los datos ingresados.";
 }

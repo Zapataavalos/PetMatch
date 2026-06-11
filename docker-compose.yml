@@ -59,11 +59,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-size:
     image: mysql:8.0
@@ -79,11 +78,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-race:
     image: mysql:8.0
@@ -99,11 +97,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-pet:
     image: mysql:8.0
@@ -119,11 +116,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-pet-color:
     image: mysql:8.0
@@ -139,11 +135,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-report-type:
     image: mysql:8.0
@@ -159,11 +154,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-report-status:
     image: mysql:8.0
@@ -179,11 +173,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-report:
     image: mysql:8.0
@@ -199,11 +192,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   # ============================================================
   # BASES DE DATOS - SERVICIOS DESARROLLADOS
@@ -223,11 +215,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-pais:
     image: mysql:8.0
@@ -243,11 +234,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-region:
     image: mysql:8.0
@@ -263,11 +253,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-ciudad:
     image: mysql:8.0
@@ -283,11 +272,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-color:
     image: mysql:8.0
@@ -303,11 +291,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-usuario:
     image: mysql:8.0
@@ -323,11 +310,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-configuracion-usuario:
     image: mysql:8.0
@@ -343,11 +329,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   mysql-ubicacion:
     image: mysql:8.0
@@ -363,11 +348,10 @@ services:
     networks:
       - petmatch-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppetmatch2026"]
       interval: 10s
-      timeout: 20s
-      retries: 30
-      start_period: 180s
+      timeout: 5s
+      retries: 5
 
   # ============================================================
   # MICROSERVICIOS DEL COMPAÑERO
@@ -912,22 +896,16 @@ services:
       SERVER_PORT: 8080
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       JWT_SECRET: PetMatchJwtSecretKey2026DebeTenerMasDe32Caracteres
-      USUARIO_SERVICE_URI: http://usuario-service:8094
-      ROL_SERVICE_URI: http://rol-service:8090
-      PAIS_SERVICE_URI: http://pais-service:8091
-      REGION_SERVICE_URI: http://region-service:8097
-      CIUDAD_SERVICE_URI: http://ciudad-service:8092
-      COLOR_SERVICE_URI: http://color-service:8093
-      CONFIGURACION_USUARIO_SERVICE_URI: http://configuracion-usuario-service:8095
-      UBICACION_SERVICE_URI: http://ubicacion-service:8096
-      GATEWAY_CONNECT_TIMEOUT_MS: 5000
-      GATEWAY_RESPONSE_TIMEOUT: 15s
     depends_on:
       eureka-server:
         condition: service_started
       usuario-service:
         condition: service_started
       rol-service:
+        condition: service_started
+      ms-pet:
+        condition: service_started
+      ms-report:
         condition: service_started
     networks:
       - petmatch-net

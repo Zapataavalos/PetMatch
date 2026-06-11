@@ -19,11 +19,7 @@ public class DemoReportInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (reportRepository.count() > 0) {
-            return;
-        }
-
-        create(
+        upsert(
                 "REP-001",
                 "Max",
                 "Golden retriever con collar azul.",
@@ -34,7 +30,7 @@ public class DemoReportInitializer implements CommandLineRunner {
                 -70.6693,
                 LocalDateTime.now().minusHours(2)
         );
-        create(
+        upsert(
                 "REP-002",
                 "Luna",
                 "Gata negra resguardada por una vecina.",
@@ -45,9 +41,9 @@ public class DemoReportInitializer implements CommandLineRunner {
                 -70.6170,
                 LocalDateTime.now().minusHours(5)
         );
-        create(
+        upsert(
                 "REP-003",
-                "Desconocido",
+                "Nala",
                 "Perro visto cerca de una avenida con mucho transito.",
                 "Las Condes",
                 ReportStatus.EN_PELIGRO,
@@ -56,9 +52,20 @@ public class DemoReportInitializer implements CommandLineRunner {
                 -70.5675,
                 LocalDateTime.now().minusMinutes(10)
         );
+        upsert(
+                "REP-004",
+                "Toby",
+                "Mascota reunida con su familia durante la demo.",
+                "Valparaiso",
+                ReportStatus.ENCONTRADO,
+                "https://images.unsplash.com/photo-1587300003388-59208cc962cb?q=80&w=600&auto=format&fit=crop",
+                -33.0472,
+                -71.6127,
+                LocalDateTime.now().minusHours(1)
+        );
     }
 
-    private void create(
+    private void upsert(
             String codigo,
             String nombre,
             String descripcion,
@@ -69,7 +76,7 @@ public class DemoReportInitializer implements CommandLineRunner {
             Double longitud,
             LocalDateTime createdAt
     ) {
-        Report report = new Report();
+        Report report = reportRepository.findByCodigo(codigo).orElseGet(Report::new);
         report.setCodigo(codigo);
         report.setNombre(nombre);
         report.setDescripcion(descripcion);

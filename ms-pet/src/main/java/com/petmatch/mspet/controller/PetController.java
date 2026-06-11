@@ -2,7 +2,7 @@ package com.petmatch.mspet.controller;
 
 import com.petmatch.mspet.dto.PetRequest;
 import com.petmatch.mspet.dto.PetResponse;
-import com.petmatch.mspet.service.PetOperations;
+import com.petmatch.mspet.service.PetService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +21,9 @@ import java.util.List;
 @RequestMapping("/api/pet")
 public class PetController {
 
-    private final PetOperations petService;
+    private final PetService petService;
 
-    public PetController(PetOperations petService) {
+    public PetController(PetService petService) {
         this.petService = petService;
     }
 

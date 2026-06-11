@@ -77,15 +77,14 @@ export function MapPage() {
   const handleRescued = async (reporte: ReporteResumen) => {
     setError("");
     setRescuingIds((current) => new Set(current).add(reporte.id));
-    setReportes((current) => current.filter((item) => item.id !== reporte.id));
 
     try {
-      await reportApi.markFound(reporte.id);
+      const updatedReport = await reportApi.markFound(reporte.id);
+      setReportes((current) =>
+        current.map((item) => (item.id === reporte.id ? mapReport(updatedReport) : item))
+      );
     } catch {
       setError("No fue posible marcar el reporte como rescatado.");
-      setReportes((current) =>
-        current.some((item) => item.id === reporte.id) ? current : [reporte, ...current]
-      );
     } finally {
       setRescuingIds((current) => {
         const next = new Set(current);
@@ -128,6 +127,11 @@ export function MapPage() {
             <div className="flex items-center gap-3">
               <StatusDot status="EN_PELIGRO" />
               En peligro
+            </div>
+
+            <div className="flex items-center gap-3">
+              <StatusDot status="ENCONTRADO" />
+              Encontrada
             </div>
           </div>
         </div>
@@ -193,6 +197,18 @@ export function MapPage() {
             >
               <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#ef4444]" />
               En peligro
+            </button>
+
+            <button
+              onClick={() => setFilter("ENCONTRADO")}
+              className={`rounded-full border px-4 py-2 text-sm font-bold ${
+                filter === "ENCONTRADO"
+                  ? "border-[#60a5fa]/40 bg-[#60a5fa]/10 text-[#60a5fa]"
+                  : "border-[#2a2a30] text-[#9c9ca8]"
+              }`}
+            >
+              <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
+              Encontrados
             </button>
           </div>
         </div>

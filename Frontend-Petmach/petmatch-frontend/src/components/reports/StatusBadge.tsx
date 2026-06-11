@@ -1,5 +1,11 @@
 import type { ReportStatus } from "../../types";
 
+interface StatusConfig {
+  label: string;
+  className: string;
+  dot: string;
+}
+
 const statusConfig = {
   PERDIDO: {
     label: "PERDIDO",
@@ -21,10 +27,20 @@ const statusConfig = {
     className: "bg-[#60a5fa]/10 text-[#60a5fa]",
     dot: "bg-[#60a5fa]",
   },
-} satisfies Record<ReportStatus, { label: string; className: string; dot: string }>;
+} satisfies Record<ReportStatus, StatusConfig>;
+
+const fallbackStatusConfig: StatusConfig = {
+  label: "SIN ESTADO",
+  className: "bg-[#85858f]/10 text-[#c7c7d1]",
+  dot: "bg-[#85858f]",
+};
+
+function getStatusConfig(status: ReportStatus): StatusConfig {
+  return statusConfig[status] ?? fallbackStatusConfig;
+}
 
 export function StatusBadge({ status }: { status: ReportStatus }) {
-  const config = statusConfig[status];
+  const config = getStatusConfig(status);
 
   return (
     <span
@@ -36,7 +52,7 @@ export function StatusBadge({ status }: { status: ReportStatus }) {
 }
 
 export function StatusDot({ status }: { status: ReportStatus }) {
-  const config = statusConfig[status];
+  const config = getStatusConfig(status);
 
   return <span className={`h-3 w-3 rounded-full ${config.dot}`} />;
 }

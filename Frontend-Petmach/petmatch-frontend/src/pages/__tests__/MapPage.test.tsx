@@ -7,17 +7,17 @@ import { mockReports } from "../../test/testData";
 
 const reportApiMocks = vi.hoisted(() => ({
   getAll: vi.fn(),
+  markFound: vi.fn(),
   delete: vi.fn(),
   create: vi.fn(),
-  markFound: vi.fn(),
 }));
 
 vi.mock("../../api/reportApi", () => ({
   reportApi: {
     getAll: reportApiMocks.getAll,
+    markFound: reportApiMocks.markFound,
     delete: reportApiMocks.delete,
     create: reportApiMocks.create,
-    markFound: reportApiMocks.markFound,
   },
 }));
 
@@ -36,8 +36,8 @@ describe("MapPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     reportApiMocks.getAll.mockResolvedValue(mockReports);
+    reportApiMocks.markFound.mockResolvedValue(mockReports[0]);
     reportApiMocks.delete.mockResolvedValue(undefined);
-    reportApiMocks.markFound.mockResolvedValue({ ...mockReports[0], estado: "ENCONTRADO" });
   });
 
   it("abre el modal de reporte al hacer clic en una ubicacion", async () => {

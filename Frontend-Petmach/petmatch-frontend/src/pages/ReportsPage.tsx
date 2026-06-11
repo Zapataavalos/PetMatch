@@ -76,6 +76,7 @@ export function ReportsPage() {
       PERDIDO: reportes.filter((reporte) => reporte.estado === "PERDIDO").length,
       EN_REFUGIO: reportes.filter((reporte) => reporte.estado === "EN_REFUGIO").length,
       EN_PELIGRO: reportes.filter((reporte) => reporte.estado === "EN_PELIGRO").length,
+      ENCONTRADO: reportes.filter((reporte) => reporte.estado === "ENCONTRADO").length,
     }),
     [reportes]
   );
@@ -87,15 +88,14 @@ export function ReportsPage() {
   const handleRescued = async (reporte: ReporteResumen) => {
     setError("");
     setRescuingIds((current) => new Set(current).add(reporte.id));
-    setReportes((current) => current.filter((item) => item.id !== reporte.id));
 
     try {
-      await reportApi.markFound(reporte.id);
+      const updatedReport = await reportApi.markFound(reporte.id);
+      setReportes((current) =>
+        current.map((item) => (item.id === reporte.id ? mapReport(updatedReport) : item))
+      );
     } catch {
       setError("No fue posible marcar el reporte como rescatado.");
-      setReportes((current) =>
-        current.some((item) => item.id === reporte.id) ? current : [reporte, ...current]
-      );
     } finally {
       setRescuingIds((current) => {
         const next = new Set(current);
@@ -158,6 +158,13 @@ export function ReportsPage() {
             <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#ef4444]" />
             En peligro
           </FilterButton>
+          <FilterButton
+            active={filter === "ENCONTRADO"}
+            onClick={() => setFilter("ENCONTRADO")}
+          >
+            <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#60a5fa]" />
+            Encontrados
+          </FilterButton>
         </div>
       </div>
 
@@ -201,6 +208,7 @@ export function ReportsPage() {
             <SummaryRow status="PERDIDO" label="Perdidos" value={counts.PERDIDO} />
             <SummaryRow status="EN_REFUGIO" label="En refugio" value={counts.EN_REFUGIO} />
             <SummaryRow status="EN_PELIGRO" label="En peligro" value={counts.EN_PELIGRO} />
+            <SummaryRow status="ENCONTRADO" label="Encontrados" value={counts.ENCONTRADO} />
           </div>
         </aside>
       </div>

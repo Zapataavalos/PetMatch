@@ -59,6 +59,7 @@ export function DashboardPage() {
       perdidos: reportes.filter((reporte) => reporte.estado === "PERDIDO").length,
       refugio: reportes.filter((reporte) => reporte.estado === "EN_REFUGIO").length,
       peligro: reportes.filter((reporte) => reporte.estado === "EN_PELIGRO").length,
+      encontrados: reportes.filter((reporte) => reporte.estado === "ENCONTRADO").length,
     }),
     [reportes]
   );
@@ -87,6 +88,12 @@ export function DashboardPage() {
       value: counts.peligro,
       icon: AlertTriangle,
       color: "text-red-400",
+    },
+    {
+      label: "Encontrados",
+      value: counts.encontrados,
+      icon: CheckCircle,
+      color: "text-sky-400",
     },
   ];
 
@@ -127,7 +134,7 @@ export function DashboardPage() {
         </Button>
       </div>
 
-      <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
 
